@@ -20,19 +20,89 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "Този имейл адрес вече е регистриран.");
+                    return View(model);
+                }
+
+                // Хеширане на паролата
+                PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
+
+                // Създаване на нов потребител
+                var user = new User
+                {
+                    Name = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Role = UserRole.Passenger,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var token = Guid.NewGuid().ToString();
+                user.EmailVerificationToken = token;
+                user.EmailVerificationTokenExpiration = DateTime.UtcNow.AddHours(24);
+                user.IsEmailVerified = false;
+
+                // Присвояване на хешираната парола
+                user.Password = passwordHasher.HashPassword(user, model.Password);
+
+                // Запазване на потребителя в базата данни
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                var verificationLink = Url.Action(
+                    "VerifyEmail", "Account",
+                    new { token = token }, Request.Scheme);
+
+                TempData["VerificationLink"] = verificationLink;
+
+                return RedirectToAction("Login", "Account");
+            }
+            return View(model);
+        }
+
+        [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var user = _context.Users.FirstOrDefault(u => u.Email == model.Email);
+
                 if (user != null && VerifyUserPassword(user, model.Password))
                 {
+                    if (!user.IsEmailVerified)
+                    {
+                        ModelState.AddModelError("", "Моля, потвърдете имейл адреса си.");
+                        return View(model);
+                    }
+
+                    if (!user.IsActive)
+                    {
+                        ModelState.AddModelError("", "Акаунтът е деактивиран.");
+                        return View(model);
+                    }
+
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -60,6 +130,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -119,9 +190,30 @@ namespace IntercityTransportManagementSystem.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        public IActionResult VerifyEmail()
+        [HttpGet]
+        public async Task<IActionResult> VerifyEmail(string token)
         {
-            return View();
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest("Линкът е невалиден.");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.EmailVerificationToken == token &&
+                u.EmailVerificationTokenExpiration > DateTime.UtcNow);
+
+            if (user == null)
+            {
+                return View("VerificationFailed");
+            }
+
+            user.IsEmailVerified = true;
+            user.EmailVerificationToken = null;
+            user.EmailVerificationTokenExpiration = null;
+
+            await _context.SaveChangesAsync();
+
+            return View("VerificationSuccess");
         }
 
         private bool VerifyUserPassword(User user, string enteredPassword)
@@ -130,50 +222,6 @@ namespace IntercityTransportManagementSystem.Controllers
             PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
             PasswordVerificationResult result = passwordHasher.VerifyHashedPassword(user, user.Password, enteredPassword);
             return result == PasswordVerificationResult.Success;
-        }
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("Email", "Този имейл адрес вече е регистриран.");
-                    return View(model);
-                }
-
-                // Хеширане на паролата
-                PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
-
-                // Създаване на нов потребител
-                var user = new User
-                {
-                    Name = model.FistName,
-                    LastName = model.LastName,
-                    Email = model.Email,
-                    Role = UserRole.Passenger,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                // Присвояване на хешираната парола
-                user.Password = passwordHasher.HashPassword(user, model.Password);
-
-                // Запазване на потребителя в базата данни
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction("Login", "Account");
-            }
-            return View(model);
         }
 
         [HttpGet]
@@ -204,6 +252,12 @@ namespace IntercityTransportManagementSystem.Controllers
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
+
+            var resetLink = Url.Action(
+                "ResetPassword", "Account", 
+                new { token = token}, Request.Scheme);
+
+            TempData["ResetLink"] = resetLink;
 
             return RedirectToAction("ForgotPasswordConfirmation");
         }

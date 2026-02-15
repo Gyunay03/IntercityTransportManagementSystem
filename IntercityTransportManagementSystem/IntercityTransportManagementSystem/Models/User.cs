@@ -16,4 +16,7 @@ public partial class User
     public DateTime CreatedAt { get; set; }
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpiration { get; set; }
+    public string? EmailVerificationToken { get; set; }
+    public DateTime? EmailVerificationTokenExpiration { get; set; }
+    public bool IsEmailVerified { get; set; }
 }

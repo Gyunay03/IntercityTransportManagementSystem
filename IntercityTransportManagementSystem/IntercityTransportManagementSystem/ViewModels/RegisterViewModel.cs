@@ -6,7 +6,7 @@ namespace IntercityTransportManagementSystem.ViewModels
     {
         [Required(ErrorMessage = "Моля, въведете име.")]
         [Display(Name = "Име")]
-        public string FistName { get; set; }
+        public string FirstName { get; set; }
 
         [Required(ErrorMessage = "Моля, въведете фамилия.")]
         [Display(Name = "Фамилия")]
