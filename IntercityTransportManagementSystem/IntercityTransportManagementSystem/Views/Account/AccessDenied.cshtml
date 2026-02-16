@@ -1,0 +1,14 @@
+﻿@{
+	ViewData["Title"] = "Отказан достъп";
+}
+
+<div class="account-box text-center">
+	<h2 class="text-danger">Нямате права за достъп до тази страница.</h2>
+	<p>Ако мислите, че това е грешка, свържете се с администратора.</p>
+</div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+	}
+}

@@ -1,0 +1,12 @@
+﻿@{
+	ViewData["Title"] = "Грешка при потвърждение";
+	Layout = "~/Views/Shared/_AccountLayout.cshtml";
+}
+
+<div class="account-container">
+	<div class="account-box text-center">
+		<h2>Грешка при потвърждението на имейл адреса.</h2>
+		<p>Линкът е невалиден или изтекъл. Моля, опитайте отново.</p>
+		<a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-warning mt-3">Изпрати нов линк</a>
+	</div>
+</div>

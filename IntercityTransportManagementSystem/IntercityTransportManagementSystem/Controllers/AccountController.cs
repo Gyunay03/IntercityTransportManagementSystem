@@ -5,8 +5,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.Intrinsics.Arm;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -52,8 +56,11 @@ namespace IntercityTransportManagementSystem.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var token = Guid.NewGuid().ToString();
-                user.EmailVerificationToken = token;
+                var tokenBytes = RandomNumberGenerator.GetBytes(64);
+                var token = WebEncoders.Base64UrlEncode(tokenBytes);
+                var tokenHash = ComputeSha256Hash(token);
+
+                user.EmailVerificationTokenHash = tokenHash;
                 user.EmailVerificationTokenExpiration = DateTime.UtcNow.AddHours(24);
                 user.IsEmailVerified = false;
 
@@ -64,14 +71,14 @@ namespace IntercityTransportManagementSystem.Controllers
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                var verificationLink = Url.Action(
-                    "VerifyEmail", "Account",
+                var verificationLink = Url.Action("VerifyEmail", "Account", 
                     new { token = token }, Request.Scheme);
 
                 TempData["VerificationLink"] = verificationLink;
 
                 return RedirectToAction("Login", "Account");
             }
+
             return View(model);
         }
 
@@ -85,48 +92,84 @@ namespace IntercityTransportManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = _context.Users.FirstOrDefault(u => u.Email == model.Email);
+                return View(model);
+            }
+            
+            var user = _context.Users.FirstOrDefault(u => u.Email == model.Email);
 
-                if (user != null && VerifyUserPassword(user, model.Password))
-                {
-                    if (!user.IsEmailVerified)
-                    {
-                        ModelState.AddModelError("", "Моля, потвърдете имейл адреса си.");
-                        return View(model);
-                    }
-
-                    if (!user.IsActive)
-                    {
-                        ModelState.AddModelError("", "Акаунтът е деактивиран.");
-                        return View(model);
-                    }
-
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new Claim(ClaimTypes.Email, user.Email),
-                        new Claim(ClaimTypes.Name, user.Name +  " " + user.LastName),
-                        new Claim(ClaimTypes.Role, user.Role.ToString())
-                    };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                    var authProperties = new AuthenticationProperties
-                    {
-                        IsPersistent = model.RememberMe,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-                    };
-
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-                    return RedirectToAction("Index", "Home");
-                }
-
-                ModelState.AddModelError("", "Невалидни данни за вход.");
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Невалиден имейл или парола.");
+                return View(model);
             }
 
-            return View(model);
+            // Проверка за временно заключен акаунт
+            if (user.LockoutEnd != null && user.LockoutEnd > DateTime.UtcNow)
+            {
+                ModelState.AddModelError("", "Акаунтът е временно заключен.");
+                return View(model);
+            }
+            
+            // Проверка на паролата
+            bool passwordValid = VerifyUserPassword(user, model.Password);
+
+            if (!passwordValid)
+            {
+                user.FailedLoginAttempts++;
+
+                if (user.FailedLoginAttempts >= 5)
+                {
+                    user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+                    user.FailedLoginAttempts = 0;
+                }
+
+                await _context.SaveChangesAsync();
+
+                ModelState.AddModelError("", "Невалиден имейл или парола.");
+                return View(model);
+            }
+
+            // Успешно влизане - нулиране на брояча за неуспешни опити и премахване на заключването
+            user.FailedLoginAttempts = 0;
+            user.LockoutEnd = null;
+
+            // Проверка дали имейлът е потвърден
+            if (!user.IsEmailVerified)
+            {
+                ModelState.AddModelError("", "Моля, потвърдете имейл адреса си.");
+                return View(model);
+            }
+
+            if (!user.IsActive)
+            {
+                ModelState.AddModelError("", "Акаунтът е деактивиран.");
+                return View(model);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Създаване на claims за автентикация
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Name +  " " + user.LastName),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = model.RememberMe,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+            };
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
+                new ClaimsPrincipal(claimsIdentity), authProperties);
+                
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
@@ -166,9 +209,11 @@ namespace IntercityTransportManagementSystem.Controllers
                 return View(model);
             }
 
+            var tokenHash = ComputeSha256Hash(model.Token);
+
             var user = await _context.Users.FirstOrDefaultAsync(u => 
                 u.Email == model.Email && 
-                u.PasswordResetToken == model.Token &&
+                u.PasswordResetTokenHash == tokenHash &&
                 u.PasswordResetTokenExpiration > DateTime.UtcNow);
 
             if (user == null)
@@ -180,7 +225,7 @@ namespace IntercityTransportManagementSystem.Controllers
             var passwordHasher = new PasswordHasher<User>();
             user.Password = passwordHasher.HashPassword(user, model.NewPassword);
 
-            user.PasswordResetToken = null;
+            user.PasswordResetTokenHash = null;
             user.PasswordResetTokenExpiration = null;
 
             _context.Users.Update(user);
@@ -198,8 +243,10 @@ namespace IntercityTransportManagementSystem.Controllers
                 return BadRequest("Линкът е невалиден.");
             }
 
+            var tokenHash = ComputeSha256Hash(token);
+
             var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.EmailVerificationToken == token &&
+                u.EmailVerificationTokenHash == tokenHash &&
                 u.EmailVerificationTokenExpiration > DateTime.UtcNow);
 
             if (user == null)
@@ -208,7 +255,7 @@ namespace IntercityTransportManagementSystem.Controllers
             }
 
             user.IsEmailVerified = true;
-            user.EmailVerificationToken = null;
+            user.EmailVerificationTokenHash = null;
             user.EmailVerificationTokenExpiration = null;
 
             await _context.SaveChangesAsync();
@@ -245,9 +292,13 @@ namespace IntercityTransportManagementSystem.Controllers
                 return RedirectToAction("ForgotPasswordConfirmation");
             }
 
-            var token = Guid.NewGuid().ToString();
-            
-            user.PasswordResetToken = token;
+            var tokenBytes = RandomNumberGenerator.GetBytes(64);
+            var token = WebEncoders.Base64UrlEncode(tokenBytes);
+
+            // Хеширане на токен
+            var tokenHash = ComputeSha256Hash(token);
+
+            user.PasswordResetTokenHash = tokenHash;
             user.PasswordResetTokenExpiration = DateTime.UtcNow.AddHours(1);
 
             _context.Users.Update(user);
@@ -266,6 +317,15 @@ namespace IntercityTransportManagementSystem.Controllers
         public IActionResult ForgotPasswordConfirmation()
         {
             return View();
+        }
+
+        private string ComputeSha256Hash(string rawData)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+                return Convert.ToBase64String(bytes);
+            }
         }
     }
 }

@@ -14,9 +14,11 @@ public partial class User
     public UserRole Role { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
-    public string? PasswordResetToken { get; set; }
+    public string? PasswordResetTokenHash { get; set; }
     public DateTime? PasswordResetTokenExpiration { get; set; }
-    public string? EmailVerificationToken { get; set; }
+    public string? EmailVerificationTokenHash { get; set; }
     public DateTime? EmailVerificationTokenExpiration { get; set; }
     public bool IsEmailVerified { get; set; }
+    public int FailedLoginAttempts { get; set; }
+    public DateTime? LockoutEnd { get; set; }
 }
