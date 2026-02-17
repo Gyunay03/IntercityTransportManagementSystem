@@ -25,9 +25,34 @@
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         <div class="container-fluid">
-            <div class="row flex-nowrap"></div>
-        </div>   
-    }
+            <div class="row flex-nowrap">
+                <div class="col-auto col-md-3 col-xl-2 px-sm-2 bg-dark">
+                    <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                        <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
+                            <li class="nav-item">
+                                <a asp-controller="Home" asp-action="Index" class="nav-link text-white">Начало</a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-controller="BusSchedules" asp-action="Index" class="nav-link text-white">Разписание на автобуси</a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">Места в автобус</a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-controller="Reservations" asp-action="Index" class="nav-link text-white">Резервиране на място</a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-controller="Payments" asp-action="Index" class="nav-link text-white">Купуване на билет</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col py-3">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+	}
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -36,7 +61,7 @@
 
     <footer class="custom-footer text-center">
         <div class="container">
-            &copy; 2026 - Система за управление на междуградски транспорт - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - Система за управление на междуградски транспорт. Всички права запазени!
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

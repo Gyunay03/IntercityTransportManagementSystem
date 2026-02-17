@@ -8,11 +8,7 @@
 
 	else
 	{
-		<li class="nav-item">
-			<a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Вход</a>
-		</li>
-		<li class="nav-item">
-			<a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Регистрация</a>
-		</li>
+		<button type="button" class="btn button-register me-2" onclick="location.href='@Url.Action("Register", "Account")'">Регистрация</button>
+		<button type="button" class="btn button-login" onclick="location.href='@Url.Action("Login", "Account")'">Вход</button>
 	}
 </ul>

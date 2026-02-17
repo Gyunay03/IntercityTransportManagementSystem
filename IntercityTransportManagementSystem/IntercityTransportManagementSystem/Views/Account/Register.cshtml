@@ -22,7 +22,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
+                <input asp-for="Email" class="form-control" placeholder="example@mail.com" autofocus />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="mb-3">
@@ -34,6 +34,10 @@
                 <label asp-for="ConfirmPassword" class="form-label"></label>
                 <input asp-for="ConfirmPassword" class="form-control" />
                 <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            <input type="submit" value="Регистрация" class="btn btn-success w-100 p-2"/>
+            <div class="text-center">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none mb-3">Назад</a>
             </div>
         </form>
     </div>
