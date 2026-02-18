@@ -2,21 +2,21 @@
     background-color: #2DCA06;
     color: white;
     border: none;
-    padding: 10px 30px;
+    padding: 10px 20px;
     font-size: 14px;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .button-register:hover {
-    background-color: #28a805;
+    background-color: #28A805;
 }
 
 .button-login {
     background-color: #007BFF;
     color: white;
     border: none;
-    padding: 10px 30px;
+    padding: 10px 20px;
     font-size: 14px;
     border-radius: 5px;
     cursor: pointer;
@@ -24,4 +24,14 @@
 
 .button-login:hover {
     background-color: #251FDE;
+}
+
+.button-logout {
+    background-color: #069A06;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
 }

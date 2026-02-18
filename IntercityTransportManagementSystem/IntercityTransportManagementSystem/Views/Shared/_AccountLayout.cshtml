@@ -1,14 +1,15 @@
 ﻿<!DOCTYPE html>	
 <html lang="en">
 <head>
-	<meta charset="utf-8"/>
+	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>@ViewBag.Title</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
 	<link rel="stylesheet" href="~/css/account.css" asp-append-version="true"/>
+	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
 	<link rel="stylesheet" href="~/IntercityTransportManagementSystem.styles.css" asp-append-version="true"/>
 </head>
-<body>
+<body class="page-background d-flex flex-column min-vh-100">
 	<header>
 		<nav class="navbar navbar-expand-sm custom-header position-relative">
 			<div class="container-fluid">
@@ -21,9 +22,9 @@
 			</div>
 		</nav>
 	</header>
-	<div>
+	<main class="flex-fill">
 		@RenderBody()
-	</div>
+	</main>
 
 	<footer class="custom-footer text-center">
 		<div class="container">
