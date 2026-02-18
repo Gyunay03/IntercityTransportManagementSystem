@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
+    [Authorize(Roles = "Administrator")]
     public class UsersController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
@@ -43,6 +46,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Users/Create
+        [Authorize(Roles = "Administrator")]
         public IActionResult Create()
         {
             return View();
@@ -57,6 +61,12 @@ namespace IntercityTransportManagementSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (!string.IsNullOrEmpty(user.Password))
+                {
+                    var passwordHasher = new PasswordHasher<User>();
+                    user.Password = passwordHasher.HashPassword(user, user.Password);
+                }
+
                 _context.Add(user);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -94,6 +104,12 @@ namespace IntercityTransportManagementSystem.Controllers
 
             if (ModelState.IsValid)
             {
+                if (!string.IsNullOrEmpty(user.Password))
+                {
+                    var passwordHasher = new PasswordHasher<User>();
+                    user.Password = passwordHasher.HashPassword(user, user.Password);
+                }
+
                 try
                 {
                     _context.Update(user);
@@ -151,6 +167,76 @@ namespace IntercityTransportManagementSystem.Controllers
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // Метод за активиране на потребителски профил
+        public async Task<IActionResult> UnlockAccount(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            user.LockoutEnd = null;
+            user.FailedLoginAttempts = 0;
+
+            _context.Update(user);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // Метод за потвърждаване на имейл адрес
+        public async Task<IActionResult> VerifyEmail(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            user.IsEmailVerified = true;
+            _context.Update(user);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // Метод за нулиране на парола
+        public async Task<IActionResult> ResetPassword(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            // Генериране на случайна временна парола
+            string temporaryPassword = GenerateTemporaryPassword();
+
+            var passwordHasher = new PasswordHasher<User>();
+            user.Password = passwordHasher.HashPassword(user, temporaryPassword);
+
+            // Нулиране на заключването и броя на неуспешните опити за вход
+            user.LockoutEnd = null;
+            user.FailedLoginAttempts = 0;
+
+            TempData["ResetPasswordMessage"] = $"Временната парола за {user.Email} е: {temporaryPassword}";
+
+            _context.Update(user);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        // Метод за генериране на силна временна парола
+        private string GenerateTemporaryPassword(int length = 12)
+        {
+            const string validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*?";
+            var random = new Random();
+            return new string(Enumerable.Repeat(validChars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

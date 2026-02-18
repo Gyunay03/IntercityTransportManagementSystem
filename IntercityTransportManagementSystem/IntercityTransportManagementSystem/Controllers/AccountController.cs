@@ -97,7 +97,7 @@ namespace IntercityTransportManagementSystem.Controllers
                 return View(model);
             }
             
-            var user = _context.Users.FirstOrDefault(u => u.Email == model.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
 
             if (user == null)
             {
