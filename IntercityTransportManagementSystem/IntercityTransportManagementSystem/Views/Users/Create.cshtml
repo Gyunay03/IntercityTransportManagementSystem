@@ -1,0 +1,74 @@
+﻿@using IntercityTransportManagementSystem.Enums;
+@model IntercityTransportManagementSystem.Models.User
+
+@{
+    ViewData["Title"] = "Добавяне на нов потребител";
+	Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Добавяне на нов потребител</h2>
+<div class="d-flex justify-content-center">
+	<div style="max-width: 500px; width: 100%;">
+		<form asp-action="Create">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+			<div class="mb-3">
+				<label asp-for="Name" class="form-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="LastName" class="form-label"></label>
+				<input asp-for="LastName" class="form-control" />
+				<span asp-validation-for="LastName" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="Email" class="form-label"></label>
+				<input asp-for="Email" class="form-control" />
+				<span asp-validation-for="Email" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="Password" class="form-label"></label>
+				<input asp-for="Password" type="password" class="form-control" />
+				<span asp-validation-for="Password" class="text-danger"></span>
+			</div>
+
+			<div class="mb-3">
+				<label asp-for="Role" class="form-label"></label>
+				<select asp-for="Role" 
+						asp-items="Html.GetEnumSelectList<UserRole>()" 
+						class="form-select">
+				</select>
+				<span asp-validation-for="Role" class="text-danger"></span>
+			</div>
+
+			<div class="form-check mb-2">
+				<input class="form-check-input" asp-for="IsActive" />
+				<label class="form-check-label" asp-for="IsActive"></label>
+			</div>
+
+			<div class="form-check mb-3">
+				<input class="form-check-input" asp-for="IsEmailVerified" />
+				<label class="form-check-label" asp-for="IsEmailVerified"></label>
+			</div>
+
+			<div class="d-flex justify-content-center gap-2 mt-4">
+				<a asp-action="Index" class="btn btn-secondary">Откажи</a>
+				<input type="submit" value="Добави" class="btn btn-primary" /> <br />
+				
+			</div>
+
+			<div class="d-flex justify-content-center gap-2 mt-4">
+				
+			</div>
+		</form>
+	</div>	
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

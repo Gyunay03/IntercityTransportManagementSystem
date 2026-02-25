@@ -1,0 +1,66 @@
+﻿@model IntercityTransportManagementSystem.Models.User
+
+@{
+    ViewData["Title"] = "Изтриване на потребител";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+<div class="form-narrow">
+    <div class="container mt-4">
+        <h2 class="text-center">Изтриване на потребител</h2>
+    </div>
+
+    <div class="alert alert-warning text-center">
+        Сигурни ли сте, че искате да изтриете този потребител?
+    </div>
+
+    <hr />
+
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LastName)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.LastName)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Email)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Email)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Role)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Role)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.IsActive)</dt>
+        <dd class="col-sm-9">
+            @if (Model.IsActive)
+            {
+                <span class="badge bg-success">Активен</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Неактивен</span>   
+            }
+        </dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.IsEmailVerified)</dt>
+        <dd class="col-sm-9">
+            @if (Model.IsEmailVerified)
+            {
+                <span class="badge bg-success">Потвърден</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Непотвърден</span>    
+            }
+        </dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.CreatedAt)</dd>
+    </dl>
+
+    <form asp-action="Delete" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+            <input type="submit" value="Изтрий" class="btn btn-danger" />
+        </div>
+    </form>
+</div>

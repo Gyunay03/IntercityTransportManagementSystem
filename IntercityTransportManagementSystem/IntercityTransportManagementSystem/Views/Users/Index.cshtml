@@ -1,0 +1,255 @@
+﻿@using IntercityTransportManagementSystem.Enums;
+@using IntercityTransportManagementSystem.ViewModels
+@model UserIndexViewModel
+
+@{
+    ViewData["Title"] = "Потребители";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h2 class="text-center mb-4">Потребители</h2>
+        
+        <div class="text-center mb-3">
+            <a asp-action="Create" class="btn btn-primary">Добави нов</a>
+        </div>
+		
+        <form method="get" class="row g-2 mb-4">
+            <div class="col-md-4">
+                <input type="text" name="searchString"
+                    class="form-control"
+                    placeholder="Търси по име, фамилия или имейл адрес."
+                    value="@Model.SearchString" />
+            </div>
+
+            <div class="col-md-3">
+                <select name="roleFilter" class="form-select">
+                    <option value="">Всички роли</option>
+                    <option value="Administrator"
+                        selected="@(Model.RoleFilter == "Administrator")">
+                        Администратор
+                    </option>
+                    <option value="Passenger"
+                        selected="@(Model.RoleFilter == "Passenger")">
+                        Пътник
+                    </option>
+                    <option value="Driver"
+                        selected="@(Model.RoleFilter == "Driver")">
+                        Шофьор
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="isActive" class="form-select">
+                    <option value="">Всички статуси</option>
+                    <option value="true"
+                        selected="@(Model.IsActive == true)">
+                        Активни
+                    </option>
+                    <option value="false"
+                        selected="@(Model.IsActive == false)">
+                        Неактивни
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-grid">
+			    <button type="submit" class="btn btn-outline-primary">Търси</button>
+            </div>
+        </form>
+        
+        <div class="table-responsive">
+            @if (!Model.Users.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    Няма намерени потребители.
+                </div>
+            }
+            else
+            {
+                <table class="table table-bordered text-center table-hover align-middle table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "name" ? "name_descending" : "name")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+								    Име
+								</a>
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "lastName" ? "lastName_descending" : "lastName")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Фамилия
+                               </a>    
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "email" ? "email_descending" : "email")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Имейл адрес
+                                </a> 
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "role" ? "role_descending" : "role")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Роля
+                                </a>
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "isActive" ? "isActive_descending" : "isActive")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Статус
+                                </a>
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "isEmailVerified" ? "isEmailVerified_descending" : "isEmailVerified")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Имейл
+                                </a>
+                            </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "createdAt" ? "createdAt_descending" : "createdAt")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Дата на създаване
+                                </a>
+                            </th>
+                            <th class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Users)
+                        {
+                            <tr> 
+                                <td>@item.Name</td>
+                                <td>@item.LastName</td>
+                                <td>@item.Email</td>
+                                <td>
+                                    @if (item.Role == UserRole.Administrator)
+                                    {
+                                        <span class="badge bg-primary">Администратор</span>
+                                    }
+
+                                    @if (item.Role == UserRole.Passenger)
+                                    {
+                                        <span class="badge bg-secondary">Пътник</span>
+                                    }
+
+                                    @if (item.Role == UserRole.Driver)
+                                    {
+                                        <span class="badge bg-success">Шофьор</span>    
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Активен</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Неактивен</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.IsEmailVerified)
+                                    {
+                                        <span class="badge bg-success">Потвърден</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Непотвърден</span>
+                                    }
+                                </td>
+                                <td>@item.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Редактирай</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Изтрий</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage - 1)"
+                               asp-route-searchString="@Model.SearchString" 
+                               asp-route-roleFilter="@Model.RoleFilter" 
+                               asp-route-isActive="@Model.IsActive" 
+                               asp-route-sortOrder="@Model.SortOrder" >
+                               Назад
+                           </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-isActive="@Model.IsActive"
+                                   asp-route-sortOrder="@Model.SortOrder">
+                                   @i
+                                </a>
+                            </li>    
+                        }
+
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage + 1)"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-isActive="@Model.IsActive"
+                               asp-route-sortOrder="@Model.SortOrder">
+                               Напред
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
