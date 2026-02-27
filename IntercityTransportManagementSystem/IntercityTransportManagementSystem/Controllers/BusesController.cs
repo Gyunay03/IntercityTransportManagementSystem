@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
+using Microsoft.AspNetCore.Authorization;
+using IntercityTransportManagementSystem.ViewModels;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -19,9 +21,57 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Buses
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int page = 1, int pageSize = 5)
         {
-            return View(await _context.Buses.ToListAsync());
+            var busesQuery = _context.Buses
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Търсене по регистрационен номер
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                busesQuery = busesQuery.Where(b =>
+                    b.RegistrationNumber.Contains(searchString));
+            }
+
+            // Сортиране
+            switch (sortOrder)
+            {
+                case "registrationNumber":
+                    busesQuery = busesQuery.OrderBy(b => b.RegistrationNumber);
+                    break;
+                case "registrationNumber_descending":
+                    busesQuery = busesQuery.OrderByDescending(b => b.RegistrationNumber);
+                    break;
+                case "capacity":
+                    busesQuery = busesQuery.OrderBy(b => b.Capacity);
+                    break;
+                case "capacity_descending":
+                    busesQuery = busesQuery.OrderByDescending(b => b.Capacity);
+                    break;
+                default:
+                    busesQuery = busesQuery.OrderBy(b => b.RegistrationNumber);
+                    break;
+            }
+
+            // Странициране
+            var buses = await busesQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var totalBuses = await busesQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalBuses / (double)pageSize);
+
+            var viewModel = new BusIndexViewModel
+            {
+                Buses = buses,
+                SearchString = searchString,
+                SortOrder = sortOrder,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+            return View(viewModel);
         }
 
         // GET: Buses/Details/5
@@ -53,6 +103,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Create([Bind("Id,RegistrationNumber,Capacity")] Bus bus)
         {
             if (ModelState.IsValid)
@@ -65,6 +116,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Buses/Edit/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -85,6 +137,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,RegistrationNumber,Capacity")] Bus bus)
         {
             if (id != bus.Id)
@@ -116,6 +169,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Buses/Delete/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -136,6 +190,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // POST: Buses/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var bus = await _context.Buses.FindAsync(id);

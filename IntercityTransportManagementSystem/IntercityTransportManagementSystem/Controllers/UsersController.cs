@@ -104,6 +104,7 @@ namespace IntercityTransportManagementSystem.Controllers
                     break;
             };
 
+            // Странициране
             var users = await usersQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

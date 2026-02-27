@@ -32,6 +32,12 @@
                             <li class="nav-item">
                                 <a asp-controller="Home" asp-action="Index" class="nav-link text-white">Начало</a>
                             </li>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="Buses" asp-action="Index" class="nav-link text-white">Автобуси</a>
+                                </li>    
+                            }
                             <li class="nav-item">
                                 <a asp-controller="BusSchedules" asp-action="Index" class="nav-link text-white">Разписание на автобуси</a>
                             </li>
@@ -44,6 +50,12 @@
                             <li class="nav-item">
                                 <a asp-controller="Payments" asp-action="Index" class="nav-link text-white">Купуване на билет</a>
                             </li>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                            <li class="nav-item">
+                                <a asp-controller="Users" asp-action="Index" class="nav-link text-white">Потребители</a>
+                            </li>    
+                            }
                         </ul>
                     </div>
                 </div>

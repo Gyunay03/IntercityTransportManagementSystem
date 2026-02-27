@@ -1,0 +1,31 @@
+﻿@model IntercityTransportManagementSystem.Models.Bus
+
+@{
+    ViewData["Title"] = "Изтриване на автобус";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mt-4">Изтриване на автобус</h2>
+
+<div class="alert alert-warning text-center">
+    Сигурни ли сте, че искате да изтриете този автобус?
+</div>
+<hr />
+
+<div class="form-narrow">
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.RegistrationNumber)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.RegistrationNumber)</dd>
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Capacity)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Capacity)</dd>
+    </dl>
+    
+    <form asp-action="Delete" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+            <input type="submit" value="Изтриване" class="btn btn-danger" />
+        </div>
+        
+    </form>
+</div>
