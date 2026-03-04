@@ -1,0 +1,37 @@
+﻿@model IntercityTransportManagementSystem.Models.Route
+
+@{
+    ViewData["Title"] = "Изтриване на маршрут";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mt-4">Изтриване на маршрут</h2>
+
+<div class="alert alert-warning text-center">
+    Сигурни ли сте, че искате да изтриете този маршрут?
+</div>
+<hr />
+
+<div class="form-narrow">    
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.StartDestination)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.StartDestination)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.FinalDestination)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.FinalDestination)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Distance)</dt>
+        <dd class = "col-sm-8">@Model.Distance.ToString("F2") км </dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.EstimatedDuration)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.EstimatedDuration)</dd>
+    </dl>
+    
+    <form asp-action="Delete" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+            <input type="submit" value="Изтрий" class="btn btn-danger" />
+        </div>
+    </form>
+</div>

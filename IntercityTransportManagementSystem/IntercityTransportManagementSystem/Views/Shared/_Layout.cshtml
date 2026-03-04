@@ -32,24 +32,34 @@
                             <li class="nav-item">
                                 <a asp-controller="Home" asp-action="Index" class="nav-link text-white">Начало</a>
                             </li>
+                            
                             @if (User.IsInRole("Administrator"))
                             {
                                 <li class="nav-item">
                                     <a asp-controller="Buses" asp-action="Index" class="nav-link text-white">Автобуси</a>
                                 </li>    
                             }
+                            
                             <li class="nav-item">
                                 <a asp-controller="BusSchedules" asp-action="Index" class="nav-link text-white">Разписание на автобуси</a>
                             </li>
+                            
+                            <li class="nav-item">
+                                <a asp-controller="Routes" asp-action="Index" class="nav-link text-white">Маршрути</a>
+                            </li>
+                            
                             <li class="nav-item">
                                 <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">Места в автобус</a>
                             </li>
+                            
                             <li class="nav-item">
                                 <a asp-controller="Reservations" asp-action="Index" class="nav-link text-white">Резервиране на място</a>
                             </li>
+                            
                             <li class="nav-item">
                                 <a asp-controller="Payments" asp-action="Index" class="nav-link text-white">Купуване на билет</a>
                             </li>
+                            
                             @if (User.IsInRole("Administrator"))
                             {
                             <li class="nav-item">

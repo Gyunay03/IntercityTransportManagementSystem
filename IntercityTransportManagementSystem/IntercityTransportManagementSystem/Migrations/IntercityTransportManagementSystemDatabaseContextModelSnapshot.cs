@@ -41,7 +41,7 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.HasKey("Id")
                         .HasName("PK__Buses__3214EC07277431A4");
 
-                    b.ToTable("Buses");
+                    b.ToTable("Buses", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.BusSchedule", b =>
@@ -98,7 +98,7 @@ namespace IntercityTransportManagementSystem.Migrations
 
                     b.HasIndex("BusId");
 
-                    b.ToTable("BusSeats");
+                    b.ToTable("BusSeats", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Driver", b =>
@@ -127,7 +127,7 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.HasKey("Id")
                         .HasName("PK__Drivers__3214EC07450080BE");
 
-                    b.ToTable("Drivers");
+                    b.ToTable("Drivers", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Passenger", b =>
@@ -156,7 +156,7 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.HasKey("Id")
                         .HasName("PK__Passenge__3214EC076CDDEE7A");
 
-                    b.ToTable("Passengers");
+                    b.ToTable("Passengers", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Payment", b =>
@@ -191,7 +191,7 @@ namespace IntercityTransportManagementSystem.Migrations
 
                     b.HasIndex("ReservationId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Reservation", b =>
@@ -228,7 +228,7 @@ namespace IntercityTransportManagementSystem.Migrations
 
                     b.HasIndex("SeatId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Route", b =>
@@ -252,7 +252,7 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.HasKey("Id")
                         .HasName("PK__Routes__3214EC07D15BC429");
 
-                    b.ToTable("Routes");
+                    b.ToTable("Routes", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.User", b =>
@@ -319,7 +319,7 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.HasKey("Id")
                         .HasName("PK__Users__3214EC076AF395C2");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.BusSchedule", b =>

@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
 using Route = IntercityTransportManagementSystem.Models.Route;
+using Microsoft.AspNetCore.Authorization;
+using IntercityTransportManagementSystem.ViewModels;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -20,9 +22,71 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Routes
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int page = 1, int pageSize = 5)
         {
-            return View(await _context.Routes.ToListAsync());
+            var routesQuery = _context.Routes
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Търсене по начална и/или крайна дестинация
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                routesQuery = routesQuery.Where(r =>
+                    r.StartDestination.Contains(searchString) ||
+                    r.FinalDestination.Contains(searchString));
+            }
+
+            // Сортиране
+            switch (sortOrder)
+            {
+                case "startDestination":
+                    routesQuery = routesQuery.OrderBy(r => r.StartDestination);
+                    break;
+                case "startDestination_descending":
+                    routesQuery = routesQuery.OrderByDescending(r => r.StartDestination);
+                    break;
+                case "finalDestination":
+                    routesQuery = routesQuery.OrderBy(r => r.FinalDestination);
+                    break;
+                case "finalDestination_descending":
+                    routesQuery = routesQuery.OrderByDescending(r => r.FinalDestination);
+                    break;
+                case "distance":
+                    routesQuery = routesQuery.OrderBy(r => r.Distance);
+                    break;
+                case "distance_descending":
+                    routesQuery = routesQuery.OrderByDescending(r => r.Distance);
+                    break;
+                case "estimatedDuration":
+                    routesQuery = routesQuery.OrderBy(r => r.EstimatedDuration);
+                    break;
+                case "estimatedDuration_descending":
+                    routesQuery = routesQuery.OrderByDescending(r => r.EstimatedDuration);
+                    break;
+                default:
+                    routesQuery = routesQuery.OrderBy(r => r.StartDestination);
+                    break;
+            }
+
+            // Странициране
+            var routes = await routesQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var totalRoutes = await routesQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalRoutes / (double)pageSize);
+
+            var viewModel = new RouteIndexViewModel
+            {
+                Routes = routes,
+                SearchString = searchString,
+                SortOrder = sortOrder,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+
+            return View(viewModel);
         }
 
         // GET: Routes/Details/5
@@ -44,6 +108,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Routes/Create
+        [Authorize(Roles = "Administrator")]
         public IActionResult Create()
         {
             return View();
@@ -54,7 +119,8 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,StartDestination,FinalDestination")] Route route)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Create([Bind("StartDestination,FinalDestination, Distance, EstimatedDuration")] Route route)
         {
             if (ModelState.IsValid)
             {
@@ -66,6 +132,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Routes/Edit/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -86,7 +153,8 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StartDestination,FinalDestination")] Route route)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,StartDestination,FinalDestination, Distance, EstimatedDuration")] Route route)
         {
             if (id != route.Id)
             {
@@ -97,7 +165,17 @@ namespace IntercityTransportManagementSystem.Controllers
             {
                 try
                 {
-                    _context.Update(route);
+                    var existingRoute = await _context.Routes.FindAsync(id);
+                    if (existingRoute == null)
+                    {
+                        return NotFound();
+                    }
+
+                    existingRoute.StartDestination = route.StartDestination;
+                    existingRoute.FinalDestination = route.FinalDestination;
+                    existingRoute.Distance = route.Distance;
+                    existingRoute.EstimatedDuration = route.EstimatedDuration;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -117,6 +195,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Routes/Delete/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -137,6 +216,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // POST: Routes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var route = await _context.Routes.FindAsync(id);

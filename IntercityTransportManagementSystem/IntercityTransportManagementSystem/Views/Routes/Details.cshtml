@@ -1,0 +1,30 @@
+﻿@model IntercityTransportManagementSystem.Models.Route
+
+@{
+    ViewData["Title"] = "Детайли за маршрут";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Детайли за автобус</h2>
+
+<div class="form-narrow" style="height: 200px;">
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.StartDestination)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.StartDestination)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.FinalDestination)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.FinalDestination)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Distance)</dt>
+        <dd class = "col-sm-8">@Model.Distance.ToString("F2") км</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.EstimatedDuration)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.EstimatedDuration)</dd>
+    </dl>
+	
+    <div class="d-flex justify-content-center gap-2 mt-4">
+		<a asp-action="Index" class="btn btn-secondary">Назад</a>
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+    </div>
+</div>
