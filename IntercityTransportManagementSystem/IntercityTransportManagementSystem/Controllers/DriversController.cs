@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
+using Microsoft.AspNetCore.Authorization;
+using IntercityTransportManagementSystem.ViewModels;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -19,9 +21,85 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Drivers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int page = 1, int pageSize = 5)
         {
-            return View(await _context.Drivers.ToListAsync());
+            var driversQuery = _context.Drivers
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Търсене по име, фамилия, имейл адрес, телефонен номер и/или номер на шофьорска книжка
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                driversQuery = driversQuery.Where(d =>
+                    d.Name.Contains(searchString) ||
+                    d.LastName.Contains(searchString) ||
+                    d.Email.Contains(searchString) ||
+                    d.PhoneNumber.Contains(searchString) ||
+                    d.LicenseNumber.Contains(searchString));
+            }
+
+            // Сортиране
+            switch (sortOrder)
+            {
+                case "name":
+                    driversQuery = driversQuery.OrderBy(d => d.Name);
+                    break;
+                case "name_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.Name);
+                    break;
+                case "lastName":
+                    driversQuery = driversQuery.OrderBy(d => d.LastName);
+                    break;
+                case "lastName_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.LastName);
+                    break;
+                case "email":
+                    driversQuery = driversQuery.OrderBy(d => d.Email);
+                    break;
+                case "email_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.Email);
+                    break;
+                case "phoneNumber":
+                    driversQuery = driversQuery.OrderBy(d => d.PhoneNumber);
+                    break;
+                case "phoneNumber_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.PhoneNumber);
+                    break;
+                case "licenseNumber":
+                    driversQuery = driversQuery.OrderBy(d => d.LicenseNumber);
+                    break;
+                case "licenseNumber_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.LicenseNumber);
+                    break;
+                case "hireDate":
+                    driversQuery = driversQuery.OrderBy(d => d.HireDate);
+                    break;
+                case "hireDate_descending":
+                    driversQuery = driversQuery.OrderByDescending(d => d.HireDate);
+                    break;
+                default:
+                    driversQuery = driversQuery.OrderBy(d => d.Name);
+                    break;
+            }
+
+            // Странициране
+            var drivers = await driversQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var totalDrivers = await driversQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalDrivers / (double)pageSize);
+
+            var viewModel = new DriverIndexViewModel
+            {
+                Drivers = drivers,
+                SearchString = searchString,
+                SortOrder = sortOrder,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+            return View(viewModel);
         }
 
         // GET: Drivers/Details/5
@@ -43,6 +121,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Drivers/Create
+        [Authorize(Roles = "Administrator")]
         public IActionResult Create()
         {
             return View();
@@ -53,7 +132,8 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,LastName,Email")] Driver driver)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Create([Bind("Name,LastName,Email,PhoneNumber,LicenseNumber,HireDate")] Driver driver)
         {
             if (ModelState.IsValid)
             {
@@ -65,6 +145,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Drivers/Edit/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -85,7 +166,8 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,LastName,Email")] Driver driver)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,LastName,Email,PhoneNumber,LicenseNumber,HireDate")] Driver driver)
         {
             if (id != driver.Id)
             {
@@ -96,7 +178,19 @@ namespace IntercityTransportManagementSystem.Controllers
             {
                 try
                 {
-                    _context.Update(driver);
+                    var existingDriver = await _context.Drivers.FindAsync(id);
+                    if (existingDriver == null)
+                    {
+                        return NotFound();
+                    }
+
+                    existingDriver.Name = driver.Name;
+                    existingDriver.LastName = driver.LastName;
+                    existingDriver.Email = driver.Email;
+                    existingDriver.PhoneNumber = driver.PhoneNumber;
+                    existingDriver.LicenseNumber = driver.LicenseNumber;
+                    existingDriver.HireDate = driver.HireDate;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -116,6 +210,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Drivers/Delete/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -136,6 +231,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // POST: Drivers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var driver = await _context.Drivers.FindAsync(id);

@@ -1,0 +1,35 @@
+﻿@model IntercityTransportManagementSystem.Models.Driver
+
+@{
+    ViewData["Title"] = "Детайли за шофьор";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Детайли за шофьор</h2>
+
+<div class="form-narrow" style="height:350px;">
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
+        <dd class = "col-sm-8"> @Html.DisplayFor(model => model.Name)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.LastName)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.LastName)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Email)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Email)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.PhoneNumber)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.PhoneNumber)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.LicenseNumber)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.LicenseNumber)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.HireDate)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.HireDate)</dd>
+    </dl>
+    <div class="d-flex justify-content-center gap-2 mt-4">
+        <a asp-action="Index" class="btn btn-secondary">Назад</a>
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактиране</a>
+    </div>
+</div>
