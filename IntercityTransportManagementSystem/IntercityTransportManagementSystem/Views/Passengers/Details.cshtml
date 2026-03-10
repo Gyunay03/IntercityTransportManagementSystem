@@ -1,0 +1,26 @@
+﻿@model IntercityTransportManagementSystem.Models.Passenger
+
+@{
+    ViewData["Title"] = "Детайли за пътник";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Детайли за пътник</h2>
+
+<div class="form-narrow" style="height: 200px;">
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Name)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.LastName)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.LastName)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Email)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Email)</dd>
+    </dl>
+    <div class="d-flex justify-content-center gap-2 mt-4">
+		<a asp-action="Index" class="btn btn-secondary">Назад</a>
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+    </div>
+</div>

@@ -1,0 +1,130 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@model PassengerIndexViewModel
+
+@{
+    ViewData["Title"] = "Пътници";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h2 class="text-center">Пътници</h2>
+        <hr />
+
+        <div class="text-center mb-3">
+            <a asp-action="Create" class="btn btn-primary">Добави нов пътник</a>
+        </div>
+
+        <form method="get" class="row g-2 mb-4">
+            <div class="col-md-4 align-content-start">
+                <input type="text" name="searchString"
+                       class="form-control"
+                       placeholder="Търсене по име, фамилия или имейл адрес."
+                       value="@Model.SearchString"/>
+            </div>
+
+            <div class="col-md-2 d-grid">
+                <input type="submit" value="Търси" class="btn btn-outline-primary" />
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            @if (!Model.Passengers.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    Няма намерени пътници.
+                </div>
+            }
+            else
+            {
+               <table class="table table-bordered text-center table-hover align-middle table-striped">
+                   <thead class="table-info align-middle">
+                       <tr>
+                           <th>
+                               <a asp-action="Index"
+                                  asp-route-sortOrder="@(Model.SortOrder == "name" ? "name_descending" : "name")"
+                                  asp-route-searchString="@Model.SearchString"
+                                  class="text-decoration-none text-dark fw-semibold">
+                                  Име
+                               </a>
+                           </th>
+
+                           <th>
+                               <a asp-action="Index"
+                                  asp-route-sortOrder="@(Model.SortOrder == "lastName" ? "lastName_descending" : "lastName")"
+                                  asp-route-searchString="@Model.SearchString"
+                                  class="text-decoration-none text-dark fw-semibold">
+                                  Фамилия
+                              </a>
+                           </th>
+
+                           <th>
+                               <a asp-action="Index"
+                                  asp-route-sortOrder="@(Model.SortOrder == "email" ? "email_descending" : "email")"
+                                  asp-route-searchString="@Model.SearchString"
+                                  class="text-decoration-none text-dark fw-semibold">
+                                  Имейл адрес
+                               </a>
+                           </th>
+
+                           <th class="text-center">Действия</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                        @foreach (var item in Model.Passengers)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.LastName</td>
+                                <td>@item.Email</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Редактирай</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Изтрий</a>
+                                    </div>
+                                </td>
+                            </tr>    
+                        }
+                    </tbody>
+               </table>     
+
+               <nav>
+                   <ul class="pagination justify-content-center">
+                       <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                           <a class="page-link"
+                              asp-action="Index"
+                              asp-route-page="@(Model.CurrentPage - 1)"
+                              asp-route-searchString="@Model.SearchString"
+                              asp-route-sortOrder="@Model.SortOrder">
+                              Назад
+                           </a>
+                       </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-roue-searchString="@Model.SearchString"
+                                   asp-route-sortOrder="@Model.SortOrder">
+                                   @i
+                                </a>
+                            </li>    
+                        }
+
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage + 1)"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-sortOrder="@Model.SortOrder">
+                               Напред
+                        </a>
+                        </li>
+                    </ul>
+               </nav>
+            }
+        </div>
+    </div>
+</div>

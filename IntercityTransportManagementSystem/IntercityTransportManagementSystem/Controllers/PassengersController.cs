@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
+using Microsoft.AspNetCore.Authorization;
+using IntercityTransportManagementSystem.ViewModels;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -19,9 +21,66 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Passengers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int page = 1, int pageSize = 5)
         {
-            return View(await _context.Passengers.ToListAsync());
+            var passengersQuery = _context.Passengers
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Търсене по име, фамилия и/или имейл адрес
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                passengersQuery = passengersQuery.Where(p =>
+                    p.Name.Contains(searchString) ||
+                    p.LastName.Contains(searchString) ||
+                    p.Email.Contains(searchString));
+            }
+
+            // Сортиране
+            switch (sortOrder)
+            {
+                case "name":
+                    passengersQuery = passengersQuery.OrderBy(p => p.Name);
+                    break;
+                case "name_descending":
+                    passengersQuery = passengersQuery.OrderByDescending(p => p.Name);
+                    break;
+                case "lastName":
+                    passengersQuery = passengersQuery.OrderBy(p => p.LastName);
+                    break;
+                case "lastName_descending":
+                    passengersQuery = passengersQuery.OrderByDescending(p => p.LastName);
+                    break;
+                case "email":
+                    passengersQuery = passengersQuery.OrderBy(p => p.Email);
+                    break;
+                case "email_descending":
+                    passengersQuery = passengersQuery.OrderByDescending(p => p.Email);
+                    break;
+                default:
+                    passengersQuery = passengersQuery.OrderBy(p => p.Name);
+                    break;
+            }
+
+            // Странициране
+            var passengers = await passengersQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var totalPassengers = await passengersQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalPassengers / (double)pageSize);
+
+            var viewModel = new PassengerIndexViewModel
+            {
+                Passengers = passengers,
+                SearchString = searchString,
+                SortOrder = sortOrder,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+
+            return View(viewModel);
         }
 
         // GET: Passengers/Details/5
@@ -43,6 +102,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Passengers/Create
+        [Authorize(Roles = "Administrator")]
         public IActionResult Create()
         {
             return View();
@@ -53,7 +113,8 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,LastName,Email")] Passenger passenger)
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Create([Bind("Name,LastName,Email")] Passenger passenger)
         {
             if (ModelState.IsValid)
             {
@@ -65,6 +126,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Passengers/Edit/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -85,6 +147,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,LastName,Email")] Passenger passenger)
         {
             if (id != passenger.Id)
@@ -96,7 +159,16 @@ namespace IntercityTransportManagementSystem.Controllers
             {
                 try
                 {
-                    _context.Update(passenger);
+                    var existingPassenger = await _context.Passengers.FindAsync(id);
+                    if (existingPassenger == null)
+                    {
+                        return NotFound();
+                    }
+
+                    existingPassenger.Name = passenger.Name;
+                    existingPassenger.LastName = passenger.LastName;
+                    existingPassenger.Email = passenger.Email;
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -116,6 +188,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Passengers/Delete/5
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -136,6 +209,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // POST: Passengers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var passenger = await _context.Passengers.FindAsync(id);
