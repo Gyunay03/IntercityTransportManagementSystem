@@ -1,0 +1,66 @@
+﻿@model IntercityTransportManagementSystem.Models.BusSchedule
+
+@{
+    ViewData["Title"] = "Добавяне на разписание";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Добавяне на разписание</h2>
+<hr />
+
+<div class="d-flex justify-content-center">
+    <div style="max-width: 400px; width: 100%;">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="mb-3">
+                <label asp-for="RouteId" class="form-label"></label>
+                <select asp-for="RouteId" class ="form-select" asp-items="ViewBag.RouteId">
+                    <option value="">Изберете маршрут</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="BusId" class="form-label"></label>
+                <select asp-for="BusId" class ="form-select" asp-items="ViewBag.BusId">
+                    <option value="">Изберете автобус</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="DriverId" class="form-label"></label>
+                <select asp-for="DriverId" class ="form-select" asp-items="ViewBag.DriverId">
+                    <option value="">Изберете шофьор</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="TravelDate" class="form-label"></label>
+                <input asp-for="TravelDate" type="date" class="form-control" />
+                <span asp-validation-for="TravelDate" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="DepartureTime" class="form-label"></label>
+                <input asp-for="DepartureTime" type="time" class="form-control" />
+                <span asp-validation-for="DepartureTime" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="ArrivalTime" class="form-label"></label>
+                <input asp-for="ArrivalTime" type="time" class="form-control" />
+                <span asp-validation-for="ArrivalTime" class="text-danger"></span>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+                <input type="submit" value="Добави" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

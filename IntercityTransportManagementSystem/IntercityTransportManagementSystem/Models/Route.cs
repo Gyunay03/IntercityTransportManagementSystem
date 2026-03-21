@@ -8,10 +8,10 @@ public partial class Route
 {
     public int Id { get; set; }
 
-    [Display(Name = "Начална точка")]
+    [Display(Name = "Тръгване от")]
     public string StartDestination { get; set; } = null!;
 
-    [Display(Name = "Крайна точка")]
+    [Display(Name = "Пристигане в")]
     public string FinalDestination { get; set; } = null!;
 
     [Display(Name = "Разстояние")]

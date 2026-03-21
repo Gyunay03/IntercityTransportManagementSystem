@@ -1,0 +1,45 @@
+﻿@model IntercityTransportManagementSystem.Models.BusSchedule
+
+@{
+    ViewData["Title"] = "Изтриване на разписание";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mt-4">Изтриване на разписание</h2>
+<hr />
+
+<div class="alert alert-warning text-center">
+    Сигурни ли сте, че искате да изтриете това разписание?
+</div>
+<hr />
+
+<div class="form-narrow">
+    
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.TravelDate)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.TravelDate) </dd>
+        
+        <dt class="col-sm-4">Маршрут</dt>
+        <dd class="col-sm-8">@Model.Route.StartDestination - @Model.Route.FinalDestination</dd>
+
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.DepartureTime)</dt>
+        <dd class = "col-sm-8">@Model.DepartureTime.ToString("HH:mm") ч.</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.ArrivalTime)</dt>
+        <dd class = "col-sm-8">@Model.ArrivalTime.ToString("HH:mm") ч.</dd>
+        
+        <dt class = "col-sm-4">Автобус</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Bus.RegistrationNumber)</dd>
+        
+        <dt class = "col-sm-4">Шофьор</dt>
+        <dd class = "col-sm-8">@Model.Driver.Name @Model.Driver.LastName</dd>  
+    </dl>
+    
+    <form asp-action="Delete" class="mt-4">
+        <input type="hidden" asp-for="Id" />
+        <div class="d-flex justify-content-center gap-2">
+			<a asp-action="Index" class="btn btn-secondary">Откажи</a>
+            <input type="submit" value="Изтрий" class="btn btn-danger" />
+        </div>
+    </form>
+</div>

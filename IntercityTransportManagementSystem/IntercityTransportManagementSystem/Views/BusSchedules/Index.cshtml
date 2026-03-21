@@ -1,0 +1,199 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@model BusScheduleIndexViewModel
+
+@{
+    ViewData["Title"] = "Разписание на автобуси";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h2 class="text-center mb-4">Разписание на автобуси</h2>
+        <hr>
+        <div class="text-center mb-3">
+            <a asp-action="Create" class="btn btn-primary">Добави нов маршрут</a>
+        </div>
+
+        <form method="get" class="row g-2 mb-4">
+            <div class="col-md-4 align-content-between">
+                <input type="text" name="searchString"
+                    class="form-control"
+                    placeholder="Търсене по автобус, шофьор, маршрут или дата."
+                    value="@Model.SearchString" />
+            </div>
+
+            <div class="col-md-3">
+                <input type="date" name="travelDate" class="form-control" 
+                       value="@(Model.TravelDate?.ToString("yyyy-MM-dd"))"/>
+            </div>
+
+            <div class="col-md-3">
+                <input type="time" name="departureTime" class="form-control" 
+                       value="@(Model.DepartureTime?.ToString("HH:mm"))"/>
+            </div>
+
+            <div class="col-md-2 d-grid">
+                <input type="submit" value="Търси" class="btn btn-outline-primary" />
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            @if (!Model.BusSchedules.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    Няма намерени разписания на автобусите.
+                </div>
+            }
+            else
+            {
+                <table class="table table-bordered text-center table-hover align-middle table-striped">
+                    <thead class="table-info align-middle">
+                        <tr>
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "travelDate" ? "travelDate_descending" : "travelDate")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                   Дата на тръгване
+                               </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "startDestination" ? "startDestination_descending" : "startDestination")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                   Тръгване от
+                               </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "finalDestination" ? "finalDestination_descending" : "finalDestination")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                   Пристигане в
+                               </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "departureTime" ? "departureTime_descending" : "departureTime")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold"> 
+                                   Час на тръгване
+                                </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "arrivalTime" ? "arrivalTime_descending" : "arrivalTime")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                   Час на пристигане
+                               </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "busRegistrationNumber" ? "busRegistrationNumber_descending" : "busRegistrationNumber")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Автобус
+                                </a>
+                            </th>
+
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "driverName" ? "driverName_descending" : "driverName")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                   Шофьор
+                                </a>
+                            </th>
+
+                            <th class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.BusSchedules)
+                        {
+                            <tr>
+                                <td>@item.TravelDate.ToString("dd.MM.yyyy")</td>
+                                <td>@item.Route.StartDestination</td>
+                                <td>@item.Route.FinalDestination</td>
+                                <td>@item.DepartureTime.ToString("HH:mm") ч.</td>
+                                <td>@item.ArrivalTime.ToString("HH:mm") ч.</td>
+                                <td>@item.Bus.RegistrationNumber</td>
+                                <td>@item.Driver.Name @item.Driver.LastName</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Редактирай</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Изтрий</a>
+                                    </div>
+                                </td>
+                            </tr>    
+                        }
+                    </tbody>
+                </table>
+                
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage - 1)"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-travelDate="@Model.TravelDate"
+                               asp-route-departureTime="@Model.DepartureTime">
+                               Назад
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-searchString="@Model.SearchString"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-travelDate="@Model.TravelDate"
+                                   asp-route-departureTime="@Model.DepartureTime">
+                                   @i
+                                </a>
+                            </li>    
+                        }
+
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage + 1)"
+                               asp-route-searchString="@Model.SearchString"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-travelDate="@Model.TravelDate"
+                               asp-route-departureTime="@Model.DepartureTime">
+                               Напред
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

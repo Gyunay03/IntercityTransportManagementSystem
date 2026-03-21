@@ -1,0 +1,38 @@
+﻿@model IntercityTransportManagementSystem.Models.BusSchedule
+
+@{
+    ViewData["Title"] = "Детайли за разписание";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Детайли за разписание</h2>
+
+<div class="form-narrow">
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.TravelDate)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.TravelDate)</dd>
+
+        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Route.StartDestination)</dt>
+        <dd class="col-sm-8">@Html.DisplayFor(model => model.Route.StartDestination)</dd>
+        
+        <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Route.FinalDestination)</dt>
+        <dd class="col-sm-8">@Html.DisplayFor(model => model.Route.FinalDestination)</dd>
+
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.DepartureTime)</dt>
+        <dd class = "col-sm-8">@Model.DepartureTime.ToString("HH:mm") ч.</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.ArrivalTime)</dt>
+        <dd class = "col-sm-8">@Model.ArrivalTime.ToString("HH:mm") ч.</dd>
+        
+        <dt class = "col-sm-4">Автобус</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Bus.RegistrationNumber)</dd>
+        
+        <dt class = "col-sm-4">Шофьор</dt>
+        <dd class = "col-sm-8">@Model.Driver.Name @Model.Driver.LastName</dd>
+    </dl>
+    <div class="d-flex justify-content-center gap-2 mt-4">
+        <a asp-action="Index" class="btn btn-secondary">Назад</a>
+        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+    </div>
+</div>
