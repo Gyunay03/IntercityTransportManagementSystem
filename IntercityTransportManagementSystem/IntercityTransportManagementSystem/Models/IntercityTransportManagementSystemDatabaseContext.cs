@@ -76,6 +76,9 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
                 .HasForeignKey(d => d.BusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BusSeats__BusId__4AB81AF0");
+
+            entity.HasIndex(s => new { s.BusId, s.Number })
+                  .IsUnique();
         });
 
         modelBuilder.Entity<Driver>(entity =>
