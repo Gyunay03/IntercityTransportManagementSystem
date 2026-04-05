@@ -4,6 +4,7 @@ using IntercityTransportManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntercityTransportManagementSystem.Migrations
 {
     [DbContext(typeof(IntercityTransportManagementSystemDatabaseContext))]
-    partial class IntercityTransportManagementSystemDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20260403170022_AddExpirationTimeToReservationModel")]
+    partial class AddExpirationTimeToReservationModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -220,15 +223,6 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.Property<DateTime?>("ExpirationTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LockExpirationTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("PassengerId")
                         .HasColumnType("int");
 
@@ -251,11 +245,9 @@ namespace IntercityTransportManagementSystem.Migrations
 
                     b.HasIndex("PassengerId");
 
-                    b.HasIndex("SeatId");
+                    b.HasIndex("ScheduleId");
 
-                    b.HasIndex("ScheduleId", "SeatId")
-                        .IsUnique()
-                        .HasFilter("[IsActive] = 1");
+                    b.HasIndex("SeatId");
 
                     b.ToTable("Reservations");
                 });

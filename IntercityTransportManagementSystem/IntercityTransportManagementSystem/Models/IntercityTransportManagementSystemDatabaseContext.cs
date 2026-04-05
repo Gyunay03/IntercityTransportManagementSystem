@@ -123,6 +123,10 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
 
             entity.Property(e => e.ReservationTime).HasDefaultValueSql("(getdate())");
 
+            entity.HasIndex(r => new { r.ScheduleId, r.SeatId })
+                  .HasFilter("[IsActive] = 1")
+                  .IsUnique();
+
             entity.HasOne(d => d.Passenger).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.PassengerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

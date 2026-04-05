@@ -1,5 +1,7 @@
 using IntercityTransportManagementSystem.Data;
+using IntercityTransportManagementSystem.Hubs;
 using IntercityTransportManagementSystem.Models;
+using IntercityTransportManagementSystem.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,8 @@ namespace IntercityTransportManagementSystem
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddHostedService<ReservationCleanupService>();
+            builder.Services.AddSignalR();
             builder.Services.AddDbContext<IntercityTransportManagementSystemDatabaseContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -61,6 +65,8 @@ namespace IntercityTransportManagementSystem
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            app.MapHub<ReservationHub>("/reservationHub");
 
             app.Run();
         }
