@@ -1,0 +1,260 @@
+﻿@using IntercityTransportManagementSystem.Enums
+@using IntercityTransportManagementSystem.ViewModels;
+@model ReservationIndexViewModel
+
+@if (!Model.Reservations.Any())
+{
+    <div class="alert alert-warning text-center">
+        Няма намерени резервации.
+    </div>
+}
+else
+{
+    <div class="table-responsive border-0">
+        <table class="table table-bordered table-hover table-striped text-center align-middle">
+            <thead class="table-info align-middle">
+                <tr>
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "passenger" ? "passenger_descending" : "passenger")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Пътник
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "route" ? "route_descending" : "route")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Маршрут
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "registrationNumber" ? "registrationNumber_descending" : "registrationNumber")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Автобус
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "seat" ? "seat_descending" : "seat")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Място
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "travelDate" ? "travelDate_descending" : "travelDate")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Дата на пътуване
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "departureTime" ? "departureTime_descending" : "departureTime")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Час на тръгване
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "reservationTime" ? "reservationTime_descending" : "reservationTime")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Дата на резервация
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "status" ? "status_descending" : "status")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Статус
+                        </a>
+                    </th>
+
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-sortOrder="@(Model.SortOrder == "expirationTime" ? "expirationTime_descending" : "expirationTime")"
+                           asp-route-searchString="@Model.SearchString"
+                           asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                           asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                           asp-route-travelDate="@Model.TravelDate"
+                           asp-route-status="@Model.Status"
+                           class="text-decoration-none text-dark fw-semibold">
+                            Изтича след
+                        </a>
+                    </th>
+                   
+                    <th class="text-center">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Reservations)
+                {
+                    <tr>
+                        <td>@item.Passenger.Name @item.Passenger.LastName</td>
+                        <td>@item.Schedule.Route.StartDestination - @item.Schedule.Route.FinalDestination</td>
+                        <td>@item.Schedule.Bus.RegistrationNumber</td>
+                        <td>@item.Seat.Number</td>
+                        <td>@item.Schedule.TravelDate.ToString("dd.MM.yyyy")</td>
+                        <td>@item.Schedule.DepartureTime.ToString("HH:mm") ч.</td>
+                        <td>@item.ReservationTime.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @switch (@item.Status)
+                            {
+                                case ReservationStatus.Pending:
+                                    <span class="badge bg-warning text-dark">Чакаща</span>
+                                    break;
+                                case ReservationStatus.Confirmed:
+                                    <span class="badge bg-success">Потвърдена</span>
+                                    break;
+                                case ReservationStatus.Cancelled:
+                                    <span class="badge bg-danger">Отменена</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (item.Status == ReservationStatus.Pending && item.ExpirationTime != null)
+                            {
+                                var remainingTime = item.ExpirationTime.Value - DateTime.Now;
+                                if (remainingTime.TotalMinutes > 0)
+                                {
+                                    <span class="text-primary fw-bold"> @($"{Math.Ceiling(remainingTime.TotalMinutes)} мин.")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">Изтекла</span>
+                                }
+                            }
+                            else if (item.Status == ReservationStatus.Confirmed)
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                @if (User.IsInRole("Administrator") || User.IsInRole("Passenger") || User.IsInRole("Driver"))
+                                {
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>
+                                }
+                                
+                                @if (User.IsInRole("Administrator") || (User.IsInRole("Driver")))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Редактирай</a>
+                                    <a asp-action="CancelReservation" asp-route-id="@item.Id" class="btn btn-outline-danger">Откажи</a>
+
+                                    @if (item.Status == ReservationStatus.Pending)
+                                    {
+                                        <form asp-action="ConfirmReservation" method="post" style="display:inline;">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="scheduleId" value="@item.ScheduleId" />
+                                            <input type="hidden" name="seatId" value="@item.SeatId" />
+
+                                            <input type="submit" class="btn btn-outline-success btn-sm" value="Потвърди" />
+                                        </form>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    <nav>
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.CurrentPage - 1)"
+                   asp-route-searchString="@Model.SearchString"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                   asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                   asp-route-travelDate="@Model.TravelDate"
+                   asp-route-status="@Model.Status">
+                    Назад
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-searchString="@Model.SearchString"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                       asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                       asp-route-travelDate="@Model.TravelDate"
+                       asp-route-status="@Model.Status">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.CurrentPage + 1)"
+                   asp-route-searchString="@Model.SearchString"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-reservationTimeFrom="@Model.ReservationTimeFrom"
+                   asp-route-reservationTimeTo="@Model.ReservationTimeTo"
+                   asp-route-travelDate="@Model.TravelDate"
+                   asp-route-status="@Model.Status">
+                    Напред
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/IntercityTransportManagementSystem.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/seats.css" asp-append-version="true" />
 </head>
 <body class="page-background">
     <header>
@@ -48,9 +49,12 @@
                                 <a asp-controller="Routes" asp-action="Index" class="nav-link text-white">Маршрути</a>
                             </li>
                             
-                            <li class="nav-item">
-                                <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">Места в автобус</a>
-                            </li>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">Места в автобус</a>
+                                </li>
+                            }
                             
                             <li class="nav-item">
                                 <a asp-controller="Reservations" asp-action="Index" class="nav-link text-white">Резервиране на място</a>
@@ -78,7 +82,9 @@
                     </div>
                 </div>
                 <div class="col py-3">
-                    @RenderBody()
+                    <main role="main">
+						@RenderBody()
+                    </main>
                 </div>
             </div>
         </div>
@@ -94,12 +100,14 @@
 
     <footer class="custom-footer text-center">
         <div class="container">
-            &copy; 2026 - Система за управление на междуградски транспорт. Всички права запазени!
+            &copy; @DateTime.Now.Year - Система за управление на междуградски транспорт. Всички права запазени!
         </div>
     </footer>
+    
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

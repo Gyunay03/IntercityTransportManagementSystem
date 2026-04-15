@@ -118,6 +118,14 @@ namespace IntercityTransportManagementSystem.Controllers
         {
             if (ModelState.IsValid)
             {
+                passenger = new Passenger
+                {
+                    Name = passenger.Name,
+                    LastName = passenger.LastName,
+                    Email = passenger.Email,
+                    UserId = passenger.UserId
+                };
+
                 _context.Add(passenger);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

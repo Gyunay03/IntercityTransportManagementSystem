@@ -27,5 +27,7 @@ public partial class Driver
     [DataType(DataType.Date)]
     public DateTime HireDate { get; set; }
 
+    public int? UserId { get; set; }
+    public User? User { get; set; }
     public virtual ICollection<BusSchedule> BusSchedules { get; set; } = new List<BusSchedule>();
 }

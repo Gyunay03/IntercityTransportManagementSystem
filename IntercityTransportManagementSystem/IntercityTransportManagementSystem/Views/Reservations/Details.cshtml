@@ -1,0 +1,54 @@
+﻿@model IntercityTransportManagementSystem.Models.Reservation
+
+@{
+    ViewData["Title"] = "Детайли за резервация";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Детайли за резервация</h2>
+
+<div class="form-narrow">
+<hr />    
+    <dl class="row">
+        <dt class="col-sm-4">Пътник</dt>
+        <dd class="col-sm-8">@Model.Passenger.Name @Model.Passenger.LastName</dd>
+
+        <dt class="col-sm-4">Разписание</dt>
+        <dd class="col-sm-8">
+            @Model.Schedule.TravelDate,
+            @Model.Schedule.Route.StartDestination - @Model.Schedule.Route.FinalDestination 
+        </dd>
+
+		<dt class="col-sm-4">Час на тръгване:</dt>
+        <dd class="col-sm-8">@Model.Schedule.DepartureTime.ToString("HH:mm")</dd>
+		
+        <dt class="col-sm-4">Автобус:</dt>
+        <dd class="col-sm-8">@Model.Schedule.Bus.RegistrationNumber</dd>
+
+        <dt class="col-sm-4">Място</dt>
+        <dd class="col-sm-8">@Html.DisplayFor(model => model.Seat.Number)</dd>
+
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Status)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Status)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.ReservationTime)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.ReservationTime)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.ExpirationTime)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.ExpirationTime)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.IsActive)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.IsActive)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.IsLocked)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.IsLocked)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.LockExpirationTime)</dt>
+        <dd class = "col-sm-8">@Html.DisplayFor(model => model.LockExpirationTime)</dd>
+    </dl>
+</div>
+
+<div class="d-flex justify-content-center gap-2 mt-4">
+    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+</div>

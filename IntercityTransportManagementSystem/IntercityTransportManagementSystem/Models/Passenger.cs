@@ -17,6 +17,10 @@ public partial class Passenger
     [Display(Name = "Имейл адрес")]
     public string Email { get; set; } = null!;
 
+    public int? UserId { get; set; }
+
+    public User? User { get; set; }
+
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

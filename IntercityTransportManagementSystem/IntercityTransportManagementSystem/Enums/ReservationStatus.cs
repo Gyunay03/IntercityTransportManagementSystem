@@ -2,7 +2,7 @@
 
 namespace IntercityTransportManagementSystem.Enums
 {
-    public enum ReservationStatus
+    public enum ReservationStatus : byte
     {
         [Display(Name = "Чакаща")]
         Pending = 1,

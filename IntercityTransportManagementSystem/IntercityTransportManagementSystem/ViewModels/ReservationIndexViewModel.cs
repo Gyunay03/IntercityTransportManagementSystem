@@ -12,6 +12,7 @@ namespace IntercityTransportManagementSystem.ViewModels
         public DateTime? ReservationTimeTo { get; set; }
         public DateOnly? TravelDate { get; set; }
         public ReservationStatus? Status { get; set; }
+        public string StatusFilter { get; set; }
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
     }

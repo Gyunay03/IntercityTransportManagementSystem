@@ -25,6 +25,9 @@
 	
     <div class="d-flex justify-content-center gap-2 mt-4">
 		<a asp-action="Index" class="btn btn-secondary">Назад</a>
-        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+        @if (User.IsInRole("Administrator"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редактирай</a>
+        }
     </div>
 </div>

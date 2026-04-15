@@ -1,0 +1,84 @@
+﻿.seat-container .btn{
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    margin: 3px !important;
+    line-height: 40px;
+    font-size: 0.8rem;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.seat-button {
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    line-height: 45px;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-decoration: none;
+    margin: 4px;
+}
+
+.btn-available {
+    background-color: #ffffff;
+    border: 2px solid #28a745;
+    color: #28a745;
+}
+
+.btn-available:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-selected {
+    background-color: #007bff !important;
+    border-color: #0069d9 !important;
+    color: white !important;
+}
+
+.btn-taken {
+    background-color: #dc3545 !important;
+    border-color: #bd2130 !important;
+    color: white !important;
+    cursor: not-allowed;
+}
+
+.btn-locked {
+    background-color: #ffc107 !important;
+    border-color: #e0a800 !important;
+    color: #212529 !important;
+    cursor: wait;
+}
+
+.bus-frame {
+    width: fit-content;
+    margin: 0 auto;
+    border: 3px solid #666;
+    border-radius: 40px 40px 15px 15px;
+    padding: 25px 15px;
+    background-color: #f4f4f4;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    position: relative;
+    display: inline-block;
+}
+
+.bus-frame::before {
+    display:block;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #666;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.aisle {
+    width: 25px;
+    display: inline-block;
+}

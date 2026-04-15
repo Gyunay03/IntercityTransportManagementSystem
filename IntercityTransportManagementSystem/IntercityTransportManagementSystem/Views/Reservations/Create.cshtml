@@ -1,0 +1,85 @@
+﻿@using IntercityTransportManagementSystem.ViewModels;
+@model ReservationCreateViewModel
+
+@{
+    ViewData["Title"] = "Създаване на резервация";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mt-4">Създаване на нова резервация</h2>
+<hr />
+
+<div class="d-flex justify-content-center">
+    <div class="col-md-5">
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger text-center">@TempData["Error"]</div>    
+        }
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="mb-3">
+                @if (!User.IsInRole("Passenger"))
+                {
+                    <label asp-for="PassengerId" class="form-label">Пътник</label>
+                    <select asp-for="PassengerId" id="PassengerId" class="form-select" asp-items="ViewBag.PassengerId">
+                        <option value="">Изберете пътник</option>
+                    </select>
+                    <span asp-validation-for="PassengerId" class="text-danger"></span>
+                }
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="RouteId" class="form-label">Маршрут</label>
+                <select asp-for="RouteId" id="RouteId" class="form-select" asp-items="ViewBag.RouteId">
+                    <option value="">Изберете маршрут</option>
+                </select>
+                <span asp-validation-for="RouteId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ScheduleId" class="form-label"></label>
+                <select asp-for="ScheduleId" class ="form-select" id="ScheduleId" asp-items="ViewBag.ScheduleId">
+                    <option value="">Изберете разписание</option>
+                </select>
+                <span asp-validation-for="ScheduleId" class="text-danger"></span>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+				<button type="submit" class="btn btn-primary">Към избор на място</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function () {
+                    
+            $('#RouteId').change(function () {
+                var routeId = $(this).val();
+                var scheduleSelect = $('#ScheduleId');
+
+                scheduleSelect.empty();
+                scheduleSelect.append($('<option>', { value: '', text: 'Изберете разписание' }));
+
+                if(routeId) {
+                    $.getJSON('@Url.Action("GetSchedules", "Reservations")', { routeId: routeId }, function (data) {
+                        $.each(data, function (i, schedule) {
+                            scheduleSelect.append($('<option>', {
+                                value: schedule.id,
+                                text: schedule.data
+                            }));
+                        });
+                    });
+                }
+            });
+        });  
+    </script>
+}

@@ -1,0 +1,63 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@using IntercityTransportManagementSystem.Enums
+@model ReservationIndexViewModel
+@{
+    ViewData["Title"] = "Резервации";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+		<h2 class="text-center mb-4">Резервации</h2>
+        <hr />
+        <div class="text-center mb-4">
+            <a asp-action="Create" class="btn btn-primary">Добави нова резервация</a>
+        </div>
+
+        <form method="get" id="filterForm" class="row g-2 align-items-end mb-4">
+            <div class="col-md-2">
+                <label for="searchString" class="form-label fw-bold">Търсене</label>
+                <input type="text" id="searchString" name="searchString"
+                       class="form-control"
+                       placeholder="Пътник, маршрут ..."
+                       value="@Model.SearchString" />
+            </div>
+
+            <div class="col-md-2"> 
+                <label class="form-label fw-bold">От дата</label>
+                <input type="date" name="reservationTimeFrom" class="form-control" 
+                       value="@Model.ReservationTimeFrom?.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">До дата</label>
+                <input type="date" name="reservationTimeTo" class="form-control" 
+                       value="@Model.ReservationTimeTo?.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Дата на пътуване</label>
+                <input type="date" name="travelDate" class="form-control"
+                       value="@Model.TravelDate?.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Статус</label>
+                <select name="status" class="form-select" asp-items="Html.GetEnumSelectList<ReservationStatus>()">
+                    <option value="">Всички статуси</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <input type="submit" class="btn btn-outline-primary w-100" value="Търси" />
+            </div>
+        </form>
+
+        <div id="reservationsContainer">
+            @await Html.PartialAsync("_ReservationsTable", Model)            
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/reservations.js"></script>
+}

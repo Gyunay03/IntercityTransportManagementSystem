@@ -27,7 +27,7 @@ namespace IntercityTransportManagementSystem.Services
                     var context = scope.ServiceProvider
                         .GetRequiredService<IntercityTransportManagementSystemDatabaseContext>();
 
-                    var now = DateTime.UtcNow;
+                    var now = DateTime.Now;
 
                     // Автоматично обновяване на резервациите от статус "Чакаща" на "Отменена" след изтичане на определения срок (60 минути)
                     var updatedPendingReservation = await context.Reservations
@@ -38,7 +38,7 @@ namespace IntercityTransportManagementSystem.Services
                             .SetProperty(p => p.Status, ReservationStatus.Cancelled)
                             .SetProperty(p => p.IsActive, false));
 
-                    Console.WriteLine($"{DateTime.UtcNow} : {updatedPendingReservation} маркиране на преминали резервации като 'Отменена'.");
+                    Console.WriteLine($"{DateTime.Now} : {updatedPendingReservation} маркиране/маркирания на преминали резервации като 'Отменена'.");
 
                     // Автоматично обновяване на резервациите, чиято дата на пътуване вече е минала, като неактивни
                     var updtdPTravelDateRes = await context.Reservations
@@ -46,16 +46,14 @@ namespace IntercityTransportManagementSystem.Services
                         .ExecuteUpdateAsync(r => r
                             .SetProperty(p => p.IsActive, false));
 
-                    Console.WriteLine($"{DateTime.UtcNow} : {updtdPTravelDateRes} маркиране на резервацията, чиято дата на пътуване е преминала, като 'Неактивна.'");
+                    Console.WriteLine($"{DateTime.Now} : {updtdPTravelDateRes} маркиране на резервацията, чиято дата на пътуване е преминала, като 'Неактивна.'");
 
                     // Изтриване на старите заключени места при резервация 
-                    var deleteLockSeat = await context.Reservations
-                        .Where(r => r.IsLocked && 
-                               r.LockExpirationTime != null &&
-                               r.LockExpirationTime <= now)
+                    var deleteLockSeat = await context.BusSeatLocks
+                        .Where(l => l.ExpiryTime <= now)
                         .ExecuteDeleteAsync();
 
-                    Console.WriteLine($"{DateTime.UtcNow} : {deleteLockSeat} изтрити заключвания.");
+                    Console.WriteLine($"{DateTime.Now} : {deleteLockSeat} изтрит/изтрити заключвания.");
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);

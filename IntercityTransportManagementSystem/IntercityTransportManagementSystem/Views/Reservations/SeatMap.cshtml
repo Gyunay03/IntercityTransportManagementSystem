@@ -1,0 +1,134 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@model SeatMapViewModel
+
+@{
+	ViewData["Title"] = "Създаване на резервация";
+	Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center">@Model.RouteName - @Model.TravelDate.ToString("dd.MM.yyyy")</h2>
+<h4 class="text-center">Автобус: @Model.BusRegistrationNumber</h4>
+
+<form asp-action="ConfirmSeat" method="post" id="seatMapForm">
+	@Html.AntiForgeryToken()
+	<input type="hidden" name="scheduleId" id="ScheduleId" value="@Model.ScheduleId" />
+	<input type="hidden" name="passengerId" id="PassengerId" value="@Model.PassengerId" />
+	<input type="hidden" name="seatId" id="SeatId" value="" />
+
+	<div class="d-flex justify-content-center">
+		@if (TempData["Error"] != null)
+		{
+			<div class="alert alert-danger text-center">@TempData["Error"]</div>
+		}
+		else if (TempData["Success"] != null)
+		{
+			<div class="alert alert-success text-center">@TempData["Success"]</div>	
+		}
+	</div>
+
+	<div class="d-flex justify-content-center w-100">
+		<div class="bus-frame">
+			<div class="text-center mb-3 text-muted" style="font-size: 0.7rem; letter-spacing: 2px;"></div>
+
+			@{
+				int seatsPerRow = 4;
+			}
+
+			@for (int i = 0; i < Model.Seats.Count; i += seatsPerRow)
+			{
+				<div class="d-flex justify-content-center mb-2">
+					@for (int j = 0; j < seatsPerRow && i + j < Model.Seats.Count; j++)
+					{
+						var seat = Model.Seats[i + j];
+
+						var classes = "btn m-1";
+
+						if (seat.IsTaken)
+						{
+							classes += " btn-taken";
+						}
+
+						else if (seat.IsLocked)
+						{
+							classes += " btn-locked";
+						}
+
+						else if (seat.IsSelected)
+						{
+							classes += " btn-selected";
+						}
+
+						else
+						{
+							classes += " btn-available";
+						}
+
+						<button type="button" class="@classes" data-seat-id="@seat.SeatId" @(seat.IsTaken || seat.IsLocked ? "disabled" : "")>
+							@seat.Number
+						</button>
+
+						if (j == 1)
+						{
+							<div class="aisle"></div>
+						}
+					}
+				</div>
+			}
+
+		</div>
+		
+	</div>
+
+	<div class="mt-1 p-3 border-top">
+		<div class="d-flex justify-content-center flex-wrap gap-3">
+			<div class="d-flex align-items-center">
+				<span class="seat-button btn-available" style="width: 25px; height: 25px;"></span>
+				<small>Свободно</small>
+			</div>
+			
+			<div class="d-flex align-items-center">
+				<span class="seat-button btn-taken" style="width: 25px; height: 25px;"></span>
+				<small>Заето</small>
+			</div>
+			
+			<div class="d-flex align-items-center">
+				<span class="seat-button btn-locked" style="width: 25px; height: 25px;"></span>
+				<small>Временно заключено</small>
+			</div>
+			
+			<div class="d-flex align-items-center">
+				<span class="seat-button btn-selected" style="width: 25px; height: 25px;"></span>
+				<small>Вашият избор</small>
+			</div>
+		</div>
+	</div>
+	
+	<div class="d-flex justify-content-center gap-2 mt-4">
+		<a asp-action="Index" class="btn btn-secondary">Откажи</a>
+		<input type="submit" value="Резервирай" class="btn btn-success" />
+		
+	</div>
+</form>
+
+@section Scripts {
+	<script src="~/lib/signalr.js"></script>
+
+	<script>
+		if (typeof signalR === 'undefined') {
+			console.error("SignalR library could not be loaded!");
+		}
+		else {
+			console.log("Библиотеката е заредена успешно от локалния сървър.");
+		}
+	</script>
+
+	<script type="module" src="~/js/reservationHubClient.js"></script>
+	<script type="module" src="~/js/seatSelection.js"></script>
+
+	<script>
+		const CLASS_SELECTED = 'btn-selected';
+		const CLASS_LOCKED = 'btn-locked';
+		const CLASS_TAKEN = 'btn-taken';
+		const CLASS_AVAILABLE = 'btn-available';
+	</script>
+}

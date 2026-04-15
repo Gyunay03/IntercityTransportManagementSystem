@@ -28,7 +28,8 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         // GET: Reservations
-        public async Task<IActionResult> Index(string searchString, string sortOrder, DateTime? reservationTimeFrom, DateTime? reservationTimeTo, DateOnly? travelDate, ReservationStatus? status, int page = 1, int pageSize = 20)
+        [HttpGet]
+        public async Task<IActionResult> Index(string searchString, string sortOrder, string statusFilter, DateTime? reservationTimeFrom, DateTime? reservationTimeTo, DateOnly? travelDate, ReservationStatus? status, int page = 1, int pageSize = 20)
         {
             var reservationsQuery = _context.Reservations
                 .Include(r => r.Passenger)
@@ -81,6 +82,24 @@ namespace IntercityTransportManagementSystem.Controllers
             // Сортиране
             switch (sortOrder)
             {
+                case "reservationId":
+                    reservationsQuery = reservationsQuery.OrderBy(r => r.Id);
+                    break;
+
+                case "reservationId_descending":
+                    reservationsQuery = reservationsQuery.OrderByDescending(r => r.Id);
+                    break;
+
+                case "passenger":
+                    reservationsQuery = reservationsQuery.OrderBy(r =>
+                    (r.Passenger.Name + " " + r.Passenger.LastName));
+                    break;
+
+                case "passenger_descending":
+                    reservationsQuery = reservationsQuery.OrderByDescending(r =>
+                    (r.Passenger.Name + " " + r.Passenger.LastName));
+                    break;
+
                 case "route":
                     reservationsQuery = reservationsQuery.OrderBy(r =>
                     (r.Schedule.Route.StartDestination + " - " + r.Schedule.Route.FinalDestination));
@@ -99,6 +118,14 @@ namespace IntercityTransportManagementSystem.Controllers
                     reservationsQuery = reservationsQuery.OrderByDescending(r => r.Schedule.Bus.RegistrationNumber);
                     break;
 
+                case "seat":
+                    reservationsQuery = reservationsQuery.OrderBy(r => r.Seat.Number);
+                    break;
+
+                case "seat_descending":
+                    reservationsQuery = reservationsQuery.OrderByDescending(r => r.Seat.Number);
+                    break;
+
                 case "reservationTime":
                     reservationsQuery = reservationsQuery.OrderBy(r => r.ReservationTime);
                     break;
@@ -113,16 +140,6 @@ namespace IntercityTransportManagementSystem.Controllers
 
                 case "travelDate_descending":
                     reservationsQuery = reservationsQuery.OrderByDescending(r => r.Schedule.TravelDate);
-                    break;
-
-                case "passenger":
-                    reservationsQuery = reservationsQuery.OrderBy(r =>
-                    (r.Passenger.Name + " " + r.Passenger.LastName));
-                    break;
-
-                case "passenger_descending":
-                    reservationsQuery = reservationsQuery.OrderByDescending(r =>
-                    (r.Passenger.Name + " " + r.Passenger.LastName));
                     break;
 
                 case "departureTime":
@@ -157,6 +174,22 @@ namespace IntercityTransportManagementSystem.Controllers
                     reservationsQuery = reservationsQuery.OrderByDescending(r => r.IsActive);
                     break;
 
+                case "isLocked":
+                    reservationsQuery = reservationsQuery.OrderBy(r => r.IsLocked);
+                    break;
+
+                case "isLocked_descending":
+                    reservationsQuery = reservationsQuery.OrderByDescending(r => r.IsLocked);
+                    break;
+
+                case "expirationTime":
+                    reservationsQuery = reservationsQuery.OrderBy(r => r.ExpirationTime);
+                    break;
+
+                case "expirationTime_descending":
+                    reservationsQuery = reservationsQuery.OrderByDescending(r => r.ExpirationTime);
+                    break;
+
                 default:
                     reservationsQuery = reservationsQuery.OrderByDescending(r => r.ReservationTime);
                     break;
@@ -183,10 +216,16 @@ namespace IntercityTransportManagementSystem.Controllers
                 TotalPages = totalPages
             };
 
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return PartialView("_ReservationsTable", viewModel);
+            }
+
             return View(viewModel);
         }
 
         // GET: Reservations/Details/5
+        [HttpGet]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -212,65 +251,157 @@ namespace IntercityTransportManagementSystem.Controllers
 
         // Метод, чрез който се заключва място, когато е избрано от потребител
         [HttpPost]
-        public async Task<IActionResult> LockSeat(int scheduleId, int seatId)
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> LockSeat(int scheduleId, int seatId, int? passengerId)
         {
-            var now = DateTime.UtcNow;
+            var connectionId = Request.Headers["X-SignalR-ConnectionId"].ToString();
 
-            var isSeatTaken = _context.Reservations.Any(r =>
-                r.ScheduleId == scheduleId &&
-                r.SeatId == seatId &&
-                (
-                    r.IsActive ||
-                    (r.IsLocked && r.LockExpirationTime > now)
-                ));
+            var now = DateTime.Now;
 
-            if (isSeatTaken)
+            if (passengerId == null || passengerId <= 0)
             {
-                return BadRequest("Мястото вече е заето.");
+                return Json(new { success = false, message = "Невалиден или липсващ пътник." });
             }
 
-            var existingLock = _context.Reservations.FirstOrDefault(r =>
-                r.ScheduleId == scheduleId &&
-                r.SeatId == seatId &&
-                r.IsLocked &&
-                r.LockExpirationTime > now);
-
-            if (existingLock != null)
+            var passengerExists = await _context.Passengers
+                .AnyAsync(p => p.Id == passengerId);
+            
+            if (!passengerExists)
             {
-                return BadRequest("Мястото вече е заключено.");
+                return Json(new { success = false, message = "Избраният пътник не съществува в системата." });
             }
 
-            var lockReservation = new Reservation
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(userIdClaim))
+            {
+                currentUserId = int.Parse(userIdClaim);
+            }
+
+            var isAlreadyLocked = await _context.BusSeatLocks
+                .AnyAsync(l => l.ScheduleId == scheduleId && l.SeatId == seatId && l.ExpiryTime > now);
+
+            var isReserved = await _context.Reservations
+                .AnyAsync(r => r.ScheduleId == scheduleId && r.SeatId == seatId && r.Status != ReservationStatus.Cancelled);
+
+            if (isAlreadyLocked || isReserved)
+            {
+                return Json(new { success = false, message = "Мястото вече е заето или временно заключено." });
+            }
+
+            var lockSeat = new BusSeatLock
             {
                 ScheduleId = scheduleId,
                 SeatId = seatId,
-                Status = ReservationStatus.Pending,
-                IsLocked = true,
-                LockExpirationTime = now.AddMinutes(5),
-                IsActive = false
+                UserId = currentUserId,
+                PassengerId = passengerId,
+                ExpiryTime = now.AddMinutes(5),
+                CreatedAt = now,
             };
 
-            _context.Add(lockReservation);
+            _context.BusSeatLocks.Add(lockSeat);
             await _context.SaveChangesAsync();
 
-            await _hub.Clients.All.SendAsync("SeatLocked", new
+            if (!string.IsNullOrEmpty(connectionId))
             {
-                scheduleId,
-                seatId
-            });
+                await _hub.Clients.AllExcept(connectionId).SendAsync("SeatLocked", new 
+                {
+                    seatId, scheduleId 
+                });
+            }
+            else
+            {
+                await _hub.Clients.All.SendAsync("SeatLocked", new
+                {
+                    seatId, scheduleId
+                });
+            }
 
-            return Ok();
+            return Json(new { success = true });
+        }
+
+        // Метод, чрез който се отключва заключено място, когато е избрано друго
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> UnlockSeat(int scheduleId, int seatId, int? passengerId)
+        {
+            var connectionId = Request.Headers["X-SignalR-ConnectionId"].ToString();
+
+            var now = DateTime.Now;
+
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(userIdClaim))
+            {
+                currentUserId = int.Parse(userIdClaim);
+            }
+
+            var existingLock = await _context.BusSeatLocks.FirstOrDefaultAsync(l =>
+                l.ScheduleId == scheduleId &&
+                l.SeatId == seatId &&
+                (l.PassengerId == passengerId || l.UserId == currentUserId));
+
+            if (existingLock != null)
+            {
+                _context.BusSeatLocks.Remove(existingLock);
+                await _context.SaveChangesAsync();
+
+                await _hub.Clients.All.SendAsync("SeatUnlocked", new { scheduleId, seatId });
+
+                return Json(new { success = true, message = "Мястото е отключено." });
+            }
+
+            return Json(new { success = false, message = "Не е намерено заключване за това място." });
         }
 
         // GET: Reservations/Create
-        [Authorize(Roles = "Administrator")]
-        public IActionResult Create()
+        [HttpGet]
+        public async Task <IActionResult> Create()
         {
             var ViewModel = new ReservationCreateViewModel
             {
                 Schedules = _context.BusSchedules.ToList(),
                 Seats = new List<BusSeat>()
             };
+
+            if (User.IsInRole("Passenger"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    var userId = int.Parse(userIdClaim);
+                    var passenger = _context.Passengers
+                        .FirstOrDefault(p => p.UserId == userId);
+
+                    if (passenger != null)
+                    {
+                        ViewModel.PassengerId = passenger.Id;
+                    }
+                }
+            }
+
+            else
+            {
+                var passengers = _context.Passengers
+                    .Select(p => new { p.Id, FullName = p.Name + " " + p.LastName })
+                    .ToList();
+                ViewBag.PassengerId = new SelectList(passengers, "Id", "FullName");
+            }   
+
+            var routes = _context.Routes
+                .Select(r => new { r.Id, RouteName = r.StartDestination + " - " + r.FinalDestination })
+                .ToList();
+
+            var busSchedules = _context.BusSchedules
+                .Select(bs => new { bs.Id, Schedule = "Дата на пътуване: " + bs.TravelDate + " , " + "Час на тръгване " + bs.DepartureTime.ToString("HH:mm") + " , " + "Автобус: " + bs.Bus.RegistrationNumber })
+                .ToList();
+
+            var busSeats = _context.BusSeats
+                .Select(st => new { st.Id, Seat = "Място :" + st.Number });
+
+            await FillDropdowns(ViewModel.PassengerId, ViewModel.RouteId, ViewModel.ScheduleId, ViewModel.SeatId);
 
             return View(ViewModel);
         }
@@ -280,106 +411,56 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Create(ReservationCreateViewModel reservation)
         {
-            var schedule = _context.BusSchedules
-                .Include(s => s.Route)
-                .Include(s => s.Bus)
-                .FirstOrDefault(s => s.Id == reservation.ScheduleId);
+            ModelState.Clear();
 
-            var selectedSeat = _context.BusSeats
-                .Include(s => s.Bus)
-                .Include(s => s.Number)
-                .FirstOrDefault(s => s.Id == reservation.SeatId);
-            
-            if (ModelState.IsValid)
+            if (User.IsInRole("Passenger"))
             {
-                // Проверка дали разписанието съществува
-                if (schedule == null)
-                {
-                    ModelState.AddModelError("", "Избраното разписание не съществува.");
-                    return View(reservation);
-                }
-
-                // Проверка на мястото в автобуса дали вече не е резервирано от друг потребител
-                var now = DateTime.UtcNow;
-
-                var isSeatReserved = _context.Reservations.Any(r => 
-                    r.ScheduleId == reservation.ScheduleId && 
-                    r.SeatId == reservation.SeatId &&
-                    (
-                        // Активна места
-                        (r.IsActive &&
-                            (
-                                r.Status == ReservationStatus.Confirmed ||
-                                (r.Status == ReservationStatus.Pending && 
-                                 r.ExpirationTime != null &&
-                                 r.ExpirationTime > now)
-                            )
-                        )
-                        ||
-                        // Заключени места
-                        (r.IsLocked && r.LockExpirationTime > now)
-                    ));
-
-                if (isSeatReserved)
-                {
-                    ModelState.AddModelError("", "Мястото вече е резервирано от друг потребител.");
-                    return View(reservation);
-                }
-
-                var existingLock = await _context.Reservations
-                    .FirstOrDefaultAsync(r =>
-                        r.ScheduleId == reservation.ScheduleId &&
-                        r.SeatId == reservation.SeatId &&
-                        r.IsLocked &&
-                        r.LockExpirationTime > now);
-
-                if (existingLock != null)
-                {
-                    _context.Reservations.Remove(existingLock);
-                }
-
-                // Създаване на нова резервация
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var passenger = _context.Passengers
+                    .FirstOrDefault(p => p.UserId == userId);
 
-                var newReservation = new Reservation
+                if (passenger != null)
                 {
-                    ScheduleId = reservation.ScheduleId,
-                    SeatId = reservation.SeatId,
-                    PassengerId = userId,
-                    ReservationTime = DateTime.UtcNow,
-                    Status = ReservationStatus.Pending,
-                    IsActive = true,
-                    ExpirationTime = DateTime.UtcNow.AddMinutes(60)
-                };
-
-                try
-                {
-                    _context.Add(newReservation);
-                    await _context.SaveChangesAsync();
-
-                    await _hub.Clients.All.SendAsync("SeatReserved", new
-                    {
-                        reservation.ScheduleId,
-                        reservation.SeatId
-                    });
+                    reservation.PassengerId = passenger.Id;
+                    ModelState.Remove("PassengerId");
                 }
-                catch(DbUpdateException)
+                else
                 {
-                    ModelState.AddModelError("", "Мястото беше резервирано преди няколко секунди. Моля, изберете друго.");
-                    return View(reservation);
+                    ModelState.AddModelError(string.Empty, "Не е намерен профил на пътник за вашия акаунт. Моля, свържете се с администратор.");
                 }
-                
-                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                if (reservation.PassengerId == null || reservation.PassengerId == 0)
+                {
+                    ModelState.AddModelError("PassengerId", "Моля, изберете пътник.");
+                }
             }
 
-            return View(reservation);
+            if (reservation.RouteId == 0)
+            {
+                ModelState.AddModelError("RouteId", "Моля, изберете маршрут.");
+            }
+
+            if (reservation.ScheduleId == 0)
+            {
+                ModelState.AddModelError("ScheduleId", "Моля, изберете разписание.");   
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await FillDropdowns(reservation.PassengerId, reservation.RouteId, reservation.ScheduleId);
+                return View(reservation);
+            }
+
+            return RedirectToAction(nameof(SeatMap), new { scheduleId = reservation.ScheduleId, passengerId = reservation.PassengerId });
         }
 
         // GET: Reservations/Edit/5
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator, Driver")]
+        [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -417,6 +498,8 @@ namespace IntercityTransportManagementSystem.Controllers
                                 .ToList()
             };
 
+            await FillDropdowns(reservation.PassengerId, reservation.Schedule.RouteId , reservation.ScheduleId, reservation.SeatId, reservation.Id);
+
             return View(viewModel);
         }
 
@@ -425,52 +508,85 @@ namespace IntercityTransportManagementSystem.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Edit(int id, ReservationEditViewModel editViewModel)
+        [Authorize(Roles = "Administrator, Driver")]
+        public async Task<IActionResult> Edit(int id, ReservationEditViewModel model)
         {
-            if (id != editViewModel.Id)
+            if (id != model.Id)
             {
                 return NotFound();
             }
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
-            var isSeatAlreadyReserved = _context.Reservations.Any(r =>
-                r.ScheduleId == editViewModel.ScheduleId &&
-                r.SeatId == editViewModel.SeatId &&
-                r.Id != editViewModel.Id &&
-                r.IsActive &&
+            var isSeatReservedByOther = await _context.Reservations.AnyAsync(r =>
+                r.ScheduleId == model.ScheduleId &&
+                r.SeatId == model.SeatId &&
+                r.Id != model.Id &&
+                (r.IsActive &&
                 (
-                    r.Status == ReservationStatus.Confirmed ||
-                    (r.Status == ReservationStatus.Pending &&
-                     r.ExpirationTime != null &&
-                     r.ExpirationTime > now)
+                     (r.Status == ReservationStatus.Confirmed ||
+                                   (r.Status == ReservationStatus.Pending && r.ExpirationTime > now)))
+                    ||
+                    (r.IsLocked && r.LockExpirationTime > now)
                 ));
 
-            if (isSeatAlreadyReserved)
+            var isSeatLockedByOther = await _context.BusSeatLocks.AnyAsync(l =>
+                l.ScheduleId == model.ScheduleId &&
+                l.SeatId == model.SeatId &&
+                l.ExpiryTime > now &&
+                l.PassengerId != model.PassengerId);
+
+            if (isSeatReservedByOther || isSeatLockedByOther)
             {
-                ModelState.AddModelError("SeatId", "Мястото вече е резервирано.");
-            }    
+                ModelState.AddModelError("SeatId", "Избраното място вече е заето или временно заключено.");
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var reservation = await _context.Reservations.FindAsync(editViewModel.Id);
-                    reservation.ScheduleId = editViewModel.ScheduleId;
-                    reservation.SeatId = editViewModel.SeatId;
-                    reservation.Status = editViewModel.Status;
-                    reservation.ReservationTime = editViewModel.ReservationTime;
+                    var reservation = await _context.Reservations
+                        .Include(r => r.Schedule)
+                        .FirstOrDefaultAsync(m => m.Id == id);
+
+                    var oldSeatId = reservation.SeatId;
+
+                    if (reservation == null)
+                    {
+                        return NotFound();
+                    }
+
+                    reservation.PassengerId = model.PassengerId;
+                    reservation.ScheduleId = model.ScheduleId;
+                    reservation.SeatId = model.SeatId;
+                    reservation.Status = model.Status;
+                    reservation.ReservationTime = model.ReservationTime;
 
                     _context.Update(reservation);
                     await _context.SaveChangesAsync();
+
+                    var existingLock = await _context.BusSeatLocks
+                        .FirstOrDefaultAsync(l => l.ScheduleId == model.ScheduleId && l.SeatId == model.SeatId);
+                    
+                    if (existingLock != null)
+                    {
+                        _context.BusSeatLocks.Remove(existingLock);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    if (oldSeatId != model.SeatId)
+                    {
+                        await _hub.Clients.All.SendAsync("SeatUnlocked", new { scheduleId = model.ScheduleId, seatId = model.SeatId });
+                    }
+
+                    await _hub.Clients.All.SendAsync("SeatReserved", new { seatId = model.SeatId });
 
                     return RedirectToAction(nameof(Index));
                 }
 
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ReservationExists(editViewModel.Id))
+                    if (!ReservationExists(model.Id))
                     {
                         return NotFound();
                     }
@@ -481,22 +597,41 @@ namespace IntercityTransportManagementSystem.Controllers
                 } 
             }
 
-             var schedule = _context.BusSchedules.Find(editViewModel.ScheduleId);
+             var schedule = _context.BusSchedules.Find(model.ScheduleId);
                 if (schedule != null)
                 {
-                    editViewModel.BusSchedules = _context.BusSchedules
+                    model.BusSchedules = _context.BusSchedules
                                                 .Where(bs => bs.RouteId == schedule.RouteId)
                                                 .ToList();
-                    editViewModel.BusSeats = _context.BusSeats
+                    model.BusSeats = _context.BusSeats
                                                 .Where(st => st.BusId == schedule.BusId)
                                                 .ToList();
                 }
+            
+            var routes = _context.Routes
+                .Select(r => new { r.Id, RouteName = r.StartDestination + " - " + r.FinalDestination })
+                .ToList();
 
-            return View(editViewModel);
+            var busSchedules = _context.BusSchedules
+                .Select(bs => new { bs.Id, Schedule = "Дата на пътуване: " + bs.TravelDate + " , " + "Час на тръгване " + bs.DepartureTime.ToString("HH:mm") + " , " + "Автобус: " + bs.Bus.RegistrationNumber })
+                .ToList();
+
+            var busSeats = _context.BusSeats
+                .Select(st => new { st.Id, Seat = "Място :" + st.Number });
+
+            if (schedule.TravelDate < DateOnly.FromDateTime(now))
+            {
+                ModelState.AddModelError("", "Не може да редактирате резервация за изминало (старо) пътуване.");
+            }
+
+            await FillDropdowns(model.PassengerId, null, model.ScheduleId, model.SeatId, model.Id);
+
+            return View(model);
         }
 
         // GET: Reservations/CancelReservation/5
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator, Driver")]
+        [HttpGet]
         public async Task<IActionResult> CancelReservation(int? id)
         {
             if (id == null)
@@ -507,8 +642,12 @@ namespace IntercityTransportManagementSystem.Controllers
             var reservation = await _context.Reservations
                 .Include(r => r.Passenger)
                 .Include(r => r.Schedule)
+                    .ThenInclude(r => r.Route)
+                .Include(r => r.Schedule)
+                    .ThenInclude(r => r.Bus)
                 .Include(r => r.Seat)
                 .FirstOrDefaultAsync(m => m.Id == id);
+            
             if (reservation == null)
             {
                 return NotFound();
@@ -520,7 +659,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // POST: Reservations/CancelReservationConfirmed/5
         [HttpPost, ActionName("CancelReservationConfirmed")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Roles = "Administrator, Driver")]
         public async Task<IActionResult> CancelReservationConfirmed(int id)
         {
             var reservation = await _context.Reservations.FindAsync(id);
@@ -542,20 +681,15 @@ namespace IntercityTransportManagementSystem.Controllers
         // Метод за динамично зареждане на списъка с разписания след като е избран маршрут
         public JsonResult GetSchedules(int routeId)
         {
-            var schedules = _context.BusSchedules
-                .Where(s => s.RouteId == routeId)
-                .Select(s => new { s.Id, Data = s.TravelDate.ToString("dd.MM.yyyy") + " " + s.DepartureTime }).ToList();
-            
-            if (!schedules.Any())
-            {
-                return Json(new { Success = false, Message = "Избраното разписание не съществува." });
-            }
-
             if (routeId == 0)
             {
-                return Json(new { Success = false, Message = "Този маршрут не съществува." });
+                return Json(new List<object>());
             }
-            
+
+            var schedules = _context.BusSchedules
+               .Where(s => s.RouteId == routeId)
+               .Select(s => new { s.Id, Data = s.TravelDate.ToString("dd.MM.yyyy") + " " + s.DepartureTime }).ToList();
+
             return Json(schedules);
         }
 
@@ -572,71 +706,300 @@ namespace IntercityTransportManagementSystem.Controllers
                 return Json(new { Success = false, Message = "Няма налични места за това разписание.", seats = new List<object>() });
             }
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
-            var reservedSeatId = _context.Reservations
-                .Where(r =>
-                       r.ScheduleId == scheduleId &&
-                       (
-                            // Истински активни резервации 
-                            (r.IsActive &&
-                                (
-                                    r.Status == ReservationStatus.Confirmed ||
-                                    (r.Status == ReservationStatus.Pending &&
-                                     r.ExpirationTime != null &&
-                                     r.ExpirationTime > now)
-                                )
-                            )    
-                            ||
-                            // Заключени места
-                            (r.IsLocked && r.LockExpirationTime > now)
-                       )
-                    )
+            var reservedSeatIds = _context.Reservations
+                .Where(r => r.ScheduleId == scheduleId && r.IsActive &&
+                            (r.Status == ReservationStatus.Confirmed ||
+                            (r.Status == ReservationStatus.Pending && r.ExpirationTime > now)))
                 .Select(r => r.SeatId)
                 .ToList();
-            
+
+            var lockedSeatIds = _context.BusSeatLocks
+                .Where(l => l.ScheduleId == scheduleId && l.ExpiryTime > now)
+                .Select(l => l.SeatId)
+                .ToList();
+
+            var unavailableSeatIds = reservedSeatIds.Union(lockedSeatIds).ToList();
+
             var seats = _context.BusSeats
                 .Where(s => s.BusId == busId) 
                 .Select(s => new 
                 { 
                     s.Id, 
                     Number = s.Number,
-                    IsAvailable = !reservedSeatId.Contains(s.Id)
+                    IsAvailable = !unavailableSeatIds.Contains(s.Id)
                 })
                 .ToList();
             
             return Json(new { Success = true, seats = seats });
         }
 
-        // Метод за потвърждаване на резервацията от администратора
+        // Метод за потвърждаване на резервацията от администратора и шофьора
         [HttpPost]
-        [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> ConfirmReservation(int id)
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator, Driver")]
+        public async Task<IActionResult> ConfirmReservation(int id, int scheduleId, int seatId)
         {
+            var isSeatAlreadyTaken = await _context.Reservations
+                .AnyAsync(r => r.ScheduleId == scheduleId && 
+                          r.SeatId == seatId && 
+                          r.Id != id &&
+                          r.Status == ReservationStatus.Confirmed);
+
+            if (isSeatAlreadyTaken)
+            {
+                TempData["Error"] = "Мястото вече е заето. Моля, изберете друго.";
+                return RedirectToAction("SeatMap", new { scheduleId}); 
+            }
+
             var reservation = await _context.Reservations.FindAsync(id);
 
             if (reservation == null)
             {
-                return NotFound(); 
+                return NotFound("Резервацията не е намерена.");
             }
 
             if (reservation.Status != ReservationStatus.Pending)
             {
-                return BadRequest("Резервацията не може да бъде потвърдена.");
+                return BadRequest("Резервацията не може да бъде потвърдена, защото не е в изчакване.");
             }
 
-            if (reservation.ExpirationTime != null && reservation.ExpirationTime < DateTime.UtcNow)
+            if (reservation.ExpirationTime != null && reservation.ExpirationTime < DateTime.Now)
             {
-                return BadRequest("Резервацията е изтекла.");
+                return BadRequest("Резервацията е изтекла и не може да бъде потвърдена.");
             }
 
             reservation.Status = ReservationStatus.Confirmed;
             reservation.ExpirationTime = null;
             reservation.IsActive = true;
 
-            await _context.SaveChangesAsync();
+            reservation.SeatId = seatId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                await _hub.Clients.All.SendAsync("SeatReserved", new { scheduleId, seatId });
+
+                TempData["Success"] = "Резервацията е потвърдена успешно!";
+            }
+            catch 
+            {
+                ModelState.AddModelError("", "Възникна грешка при записване в базата данни.");
+            }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // Метод за визуализиране на картата с места и тяхното състоянието (свободни, заети, заключени)
+        [HttpGet]
+        [Authorize]
+        public IActionResult SeatMap(int scheduleId, int? passengerId)
+        {
+            Passenger passenger = null;
+
+            var now = DateTime.Now;
+
+            if (passengerId.HasValue && passengerId.Value > 0 && (User.IsInRole("Administrator") || User.IsInRole("Driver")))
+            {
+                passenger = _context.Passengers.FirstOrDefault(p => p.Id == passengerId.Value);
+            }
+            else if (User.IsInRole("Passenger"))
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                passenger = _context.Passengers
+                        .FirstOrDefault(p => p.UserId == userId);
+            }
+
+            if (passenger == null)
+            {
+                TempData["Error"] = "Невалиден или липсващ пътник.";
+                return RedirectToAction("Create");
+            }
+
+            var schedule = _context.BusSchedules
+                .Include(s => s.Bus)
+                .Include(s => s.Route)
+                .FirstOrDefault(s => s.Id == scheduleId);
+
+            if (schedule == null)
+            {
+                return NotFound();
+            }
+
+            var reservations = _context.Reservations
+                .Where(r => r.ScheduleId == scheduleId && r.IsActive)
+                .ToList();
+
+            var busSeats = _context.BusSeats
+                .Where(st => st.BusId == schedule.BusId)
+                .ToList();
+
+            var locks = _context.BusSeatLocks
+                .Where(l => l.ScheduleId == scheduleId && l.ExpiryTime > now)
+                .ToList();
+
+            var seats = busSeats
+                .Select(s => {
+                    var res = reservations.FirstOrDefault(r => r.SeatId == s.Id && r.Status == ReservationStatus.Confirmed);
+                    var pendingRes = reservations.FirstOrDefault(r => r.SeatId == s.Id && r.Status == ReservationStatus.Pending && r.ExpirationTime > now);
+
+                    var seatLock = locks.FirstOrDefault(l => l.SeatId == s.Id);
+
+                    bool isTaken = res != null || pendingRes != null;
+                    bool isSelected = seatLock != null && seatLock.PassengerId == passengerId;
+                    bool isLocked = seatLock != null && seatLock.PassengerId != passengerId;
+
+                    return new SeatDto
+                    {
+                        SeatId = s.Id,
+                        Number = s.Number,
+                        IsTaken = isTaken,
+                        IsSelected = isSelected,
+                        IsLocked = isLocked
+                    };
+                }).ToList();
+
+            var viewModel = new SeatMapViewModel
+            {
+                ScheduleId = scheduleId,
+                PassengerId = passenger.Id,
+                BusRegistrationNumber = schedule.Bus.RegistrationNumber,
+                RouteName = $"{schedule.Route.StartDestination} - {schedule.Route.FinalDestination}",
+                TravelDate = schedule.TravelDate,
+                Seats = seats
+            };
+
+            return View(viewModel);
+        }
+
+        // Метод, чрез който потребителят, шофьорът или администраторът може да избере място и да създаде резервация
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> ConfirmSeat(int scheduleId, int seatId, int passengerId)
+        {
+            if (seatId <= 0)
+            {
+                TempData["Error"] = "Моля, изберете валидно място.";
+                return RedirectToAction("SeatMap", new { scheduleId, passengerId });
+            }
+
+            // Проверка на мястото в автобуса дали вече не е резервирано от друг потребител
+            var now = DateTime.Now;
+
+            var isSeatReserved = await _context.Reservations.AnyAsync(r =>
+                r.ScheduleId == scheduleId &&
+                r.SeatId == seatId &&
+                r.IsActive &&
+                (
+                    r.Status == ReservationStatus.Confirmed ||
+                    (r.Status == ReservationStatus.Pending && r.ExpirationTime > now)
+                ));
+
+            var isSeatLockedByAnother = await _context.BusSeatLocks.AnyAsync(l =>
+                l.ScheduleId == scheduleId &&
+                l.SeatId == seatId &&
+                l.ExpiryTime > now &&
+                l.PassengerId != passengerId);
+
+            // Проверка дали мястото вече е заето или заключено
+            if (isSeatReserved || isSeatLockedByAnother)
+            {
+                TempData["Error"] = "Избраното място вече е заето или временно заключено.";
+                return RedirectToAction("SeatMap", new { scheduleId, passengerId });
+            }
+
+            var existingLock = await _context.BusSeatLocks
+                .FirstOrDefaultAsync(l =>
+                    l.ScheduleId == scheduleId &&
+                    l.SeatId == seatId);
+
+            if (existingLock != null)
+            {
+                _context.BusSeatLocks.Remove(existingLock);
+            }
+
+            var newReservation = new Reservation
+            {
+                ScheduleId = scheduleId,
+                SeatId = seatId,
+                PassengerId = passengerId,
+                ReservationTime = now,
+                Status = ReservationStatus.Pending,
+                IsActive = true,
+                ExpirationTime = now.AddMinutes(60)
+            };
+
+            try
+            {
+                _context.Add(newReservation);
+                await _context.SaveChangesAsync();
+                
+                await _hub.Clients.All.SendAsync("SeatReserved", new { scheduleId, seatId });
+
+                TempData["Success"] = "Мястото е успешно потвърдено!";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Възникна грешка при потвърждаването на място. Моля, опитайте отново.";
+                return RedirectToAction("SeatMap", new { scheduleId, passengerId });
+            }
+        }
+
+        // Метод за попълване на падащите менюта
+        private  async Task FillDropdowns(int? selectedPassengerId = null, int? selectedRouteId = null, int? selectedScheduleId = null, int? selectedSeatId = null, int? currentReservationId = null)
+        {
+            var now = DateTime.Now;
+
+            var passengers = await _context.Passengers.AsNoTracking()
+                .Select(p => new { p.Id, FullName = p.Name + " " + p.LastName })
+                .ToListAsync();
+
+            var routes = await _context.Routes.AsNoTracking()
+                .Select(r => new { r.Id, Routes = r.StartDestination + " - " + r.FinalDestination })
+                .ToListAsync();
+
+            var busSchedules = await _context.BusSchedules.AsNoTracking()
+                .Select(bs => new { bs.Id, Schedule = "Дата: " + bs.TravelDate.ToString("dd.MM.yyyy") + ", Час: " + bs.DepartureTime.ToString("HH:mm") + ", Автобус: " + bs.Bus.RegistrationNumber })
+                .ToListAsync();
+
+            var busSeatsQuery = _context.BusSeats.AsNoTracking();
+
+            if (selectedScheduleId.HasValue && selectedScheduleId.Value > 0)
+            {
+                var busId = await _context.BusSchedules
+                    .Where(s => s.Id == selectedScheduleId)
+                    .Select(s => s.BusId)
+                    .FirstOrDefaultAsync();
+
+                var occupiedSeatIds = _context.Reservations
+                    .Where(r => r.ScheduleId == selectedScheduleId &&
+                                r.Id != currentReservationId &&
+                                r.IsActive &&
+                                (r.Status == ReservationStatus.Confirmed ||
+                                (r.Status == ReservationStatus.Pending && r.ExpirationTime > now)))
+                    .Select(r => r.SeatId);
+
+                var lockedSeatIds = _context.BusSeatLocks
+                    .Where(l => l.ScheduleId == selectedScheduleId && l.ExpiryTime > now)
+                    .Select(l => l.SeatId);
+
+                var unavailableIds = occupiedSeatIds.Union(lockedSeatIds);
+
+                busSeatsQuery = busSeatsQuery.Where(s => s.BusId == busId && !unavailableIds.Contains(s.Id));
+            }
+
+            var busSeats = await busSeatsQuery
+                .Select(st => new { st.Id, Seat = "Място: " + st.Number })
+                .ToListAsync();
+
+            ViewData["PassengerId"] = new SelectList(passengers, "Id", "FullName", selectedPassengerId);
+            ViewData["RouteId"] = new SelectList(routes, "Id", "Routes", selectedRouteId);
+            ViewData["ScheduleId"] = new SelectList(busSchedules, "Id", "Schedule", selectedScheduleId);
+            ViewData["SeatId"] = new SelectList(busSeats, "Id", "Seat", selectedSeatId);
         }
     }
 }

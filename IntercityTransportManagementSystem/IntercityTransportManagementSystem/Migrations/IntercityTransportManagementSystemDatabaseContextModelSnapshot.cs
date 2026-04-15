@@ -105,6 +105,43 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.ToTable("BusSeats");
                 });
 
+            modelBuilder.Entity("IntercityTransportManagementSystem.Models.BusSeatLock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PassengerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SeatId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PassengerId");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.HasIndex("SeatId");
+
+                    b.ToTable("BusSeatLocks");
+                });
+
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Driver", b =>
                 {
                     b.Property<int>("Id")
@@ -139,8 +176,15 @@ namespace IntercityTransportManagementSystem.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id")
                         .HasName("PK__Drivers__3214EC07450080BE");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Drivers");
                 });
@@ -168,8 +212,15 @@ namespace IntercityTransportManagementSystem.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id")
                         .HasName("PK__Passenge__3214EC076CDDEE7A");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Passengers");
                 });
@@ -243,8 +294,8 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.Property<int>("SeatId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
 
                     b.HasKey("Id")
                         .HasName("PK__Reservat__3214EC071F7226DA");
@@ -395,6 +446,49 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.Navigation("Bus");
                 });
 
+            modelBuilder.Entity("IntercityTransportManagementSystem.Models.BusSeatLock", b =>
+                {
+                    b.HasOne("IntercityTransportManagementSystem.Models.Passenger", "Passenger")
+                        .WithMany()
+                        .HasForeignKey("PassengerId");
+
+                    b.HasOne("IntercityTransportManagementSystem.Models.BusSchedule", "Schedule")
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IntercityTransportManagementSystem.Models.BusSeat", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Passenger");
+
+                    b.Navigation("Schedule");
+
+                    b.Navigation("Seat");
+                });
+
+            modelBuilder.Entity("IntercityTransportManagementSystem.Models.Driver", b =>
+                {
+                    b.HasOne("IntercityTransportManagementSystem.Models.User", "User")
+                        .WithOne("Driver")
+                        .HasForeignKey("IntercityTransportManagementSystem.Models.Driver", "UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("IntercityTransportManagementSystem.Models.Passenger", b =>
+                {
+                    b.HasOne("IntercityTransportManagementSystem.Models.User", "User")
+                        .WithOne("Passenger")
+                        .HasForeignKey("IntercityTransportManagementSystem.Models.Passenger", "UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Payment", b =>
                 {
                     b.HasOne("IntercityTransportManagementSystem.Models.Passenger", "Passenger")
@@ -478,6 +572,13 @@ namespace IntercityTransportManagementSystem.Migrations
             modelBuilder.Entity("IntercityTransportManagementSystem.Models.Route", b =>
                 {
                     b.Navigation("BusSchedules");
+                });
+
+            modelBuilder.Entity("IntercityTransportManagementSystem.Models.User", b =>
+                {
+                    b.Navigation("Driver");
+
+                    b.Navigation("Passenger");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,6 @@
-﻿.button-register {
-    background-color: #2DCA06;
-    color: white;
+﻿.btn.button-register {
+    color: #2DCA06;
+    
     border: none;
     padding: 10px 20px;
     font-size: 14px;
@@ -8,11 +8,11 @@
     cursor: pointer;
 }
 
-.button-register:hover {
+.btn.button-register:hover {
     background-color: #28A805;
 }
 
-.button-login {
+.btn.button-login {
     background-color: #007BFF;
     color: white;
     border: none;
@@ -22,11 +22,11 @@
     cursor: pointer;
 }
 
-.button-login:hover {
+.btn.button-login:hover {
     background-color: #251FDE;
 }
 
-.button-logout {
+.btn.button-logout {
     background-color: #069A06;
     color: white;
     border: none;

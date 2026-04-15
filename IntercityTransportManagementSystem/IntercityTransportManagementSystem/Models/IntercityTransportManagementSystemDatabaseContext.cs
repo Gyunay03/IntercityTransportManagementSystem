@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using IntercityTransportManagementSystem.ViewModels;
 
 namespace IntercityTransportManagementSystem.Models;
 
@@ -20,6 +21,8 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
     public virtual DbSet<BusSchedule> BusSchedules { get; set; }
 
     public virtual DbSet<BusSeat> BusSeats { get; set; }
+
+    public virtual DbSet<BusSeatLock> BusSeatLocks { get; set; }
 
     public virtual DbSet<Driver> Drivers { get; set; }
 

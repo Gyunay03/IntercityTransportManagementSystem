@@ -1,0 +1,71 @@
+﻿@using IntercityTransportManagementSystem.Models
+@using IntercityTransportManagementSystem.Enums
+@model Reservation
+
+@{
+	ViewData["Title"] = "Анулиране на резервация";
+	Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Анулиране на резервация</h2>
+<hr />
+
+<div class="table-responsive">
+	<table class="table table-borderless">
+		<tbody>
+			<tr>
+				<th style="width: 50%;" class="text-end text-dark">Пътник</th>
+				<td>@Model.Passenger.Name @Model.Passenger.LastName</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Дата на пътуване</th>
+				<td>@Model.Schedule?.TravelDate.ToString("dd.MM.yyyy")</td>
+			</tr>
+
+			<tr>
+				<th class="text-end text-dark">Маршрут</th>
+				<td>@Model.Schedule?.Route?.StartDestination - @Model.Schedule?.Route?.FinalDestination</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Автобус</th>
+				<td>@Model.Schedule?.Bus?.RegistrationNumber</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Час на тръгване</th>
+				<td>@Model.Schedule?.DepartureTime.ToString("HH:mm")</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Място</th>
+				<td>@Model.Seat.Number</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Статус</th>
+				<td>@Html.DisplayFor(model => model.Status)</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Дата на резервиране</th>
+				<td>@Model.ReservationTime</td>
+			</tr>
+			
+			<tr>
+				<th class="text-end text-dark">Оставащо време на резервацията</th>
+				<td>@Model.ExpirationTime</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div class="d-flex justify-content-center gap-2 mt-4">
+		<form asp-action="CancelReservationConfirmed" method="post">
+			@Html.AntiForgeryToken()
+			<input type="hidden" asp-for="Id" />
+			<input type="submit" value="Анулирай резервация" class="btn btn-danger" />
+			<a asp-action="Index"class="btn btn-secondary">Назад</a>
+		</form>
+	</div>
+</div>

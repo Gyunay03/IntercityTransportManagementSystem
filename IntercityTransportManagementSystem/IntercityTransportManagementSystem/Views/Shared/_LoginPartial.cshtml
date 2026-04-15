@@ -8,7 +8,7 @@
 
 	else
 	{
-		<button type="button" class="btn button-register me-2" onclick="location.href='@Url.Action("Register", "Account")'">Регистрация</button>
-		<button type="button" class="btn button-login" onclick="location.href='@Url.Action("Login", "Account")'">Вход</button>
+		<a asp-controller="Account" asp-action="Register" class="btn btn-success me-2 shadow-sm">Регистрация</a>
+		<a asp-controller="Account" asp-action="Login" class="btn btn-primary shadow-sm">Вход</a>
 	}
 </ul>

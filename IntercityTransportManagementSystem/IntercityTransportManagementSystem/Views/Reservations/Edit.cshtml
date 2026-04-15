@@ -1,0 +1,59 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@using IntercityTransportManagementSystem.Enums
+@model ReservationEditViewModel
+
+@{
+    ViewData["Title"] = "Редактиране на резервация";
+    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+}
+
+<h2 class="text-center mb-4">Редактиране на резервация</h2>
+<hr />
+<div class="form-narrow">
+    <div class="col-md-10">
+        <form asp-action="Edit">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="mb-3">
+                <label asp-for="PassengerId" class="form-label">Пътник</label>
+                <select asp-for="PassengerId" class="form-select" asp-items="ViewBag.PassengerId"></select>
+                <span asp-validation-for="PassengerId" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="ScheduleId" class="form-label">Разписание</label>
+                <select asp-for="ScheduleId" class="form-select" asp-items="ViewBag.ScheduleId"></select>
+                <span asp-validation-for="ScheduleId" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="SeatId" class="form-label">Място</label>
+                <select asp-for="SeatId" class="form-select" asp-items="ViewBag.SeatId"></select>
+                <span asp-validation-for="SeatId" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Status" class="form-label">Статус</label>
+                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ReservationStatus>()"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="ReservationTime" class="form-label">Дата на резервация</label>
+                <input asp-for="ReservationTime" class="form-control"  type="datetime-local" step="1"/>
+                <span asp-validation-for="ReservationTime" class="text-danger"></span>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Откажи</a>
+                <input type="submit" value="Запази" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
