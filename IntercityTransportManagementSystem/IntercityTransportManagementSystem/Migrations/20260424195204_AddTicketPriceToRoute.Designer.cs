@@ -4,6 +4,7 @@ using IntercityTransportManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntercityTransportManagementSystem.Migrations
 {
     [DbContext(typeof(IntercityTransportManagementSystemDatabaseContext))]
-    partial class IntercityTransportManagementSystemDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20260424195204_AddTicketPriceToRoute")]
+    partial class AddTicketPriceToRoute
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,9 +247,6 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.Property<byte>("PaymentMethod")
                         .HasColumnType("tinyint");
 
-                    b.Property<int>("PaymentStatus")
-                        .HasColumnType("int");
-
                     b.Property<int>("ReservationId")
                         .HasColumnType("int");
 
@@ -291,9 +291,6 @@ namespace IntercityTransportManagementSystem.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int?>("ReturnReservationId")
-                        .HasColumnType("int");
-
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
@@ -303,15 +300,10 @@ namespace IntercityTransportManagementSystem.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("tinyint");
 
-                    b.Property<int>("TicketType")
-                        .HasColumnType("int");
-
                     b.HasKey("Id")
                         .HasName("PK__Reservat__3214EC071F7226DA");
 
                     b.HasIndex("PassengerId");
-
-                    b.HasIndex("ReturnReservationId");
 
                     b.HasIndex("SeatId");
 
@@ -530,11 +522,6 @@ namespace IntercityTransportManagementSystem.Migrations
                         .IsRequired()
                         .HasConstraintName("FK__Reservati__Passe__4BAC3F29");
 
-                    b.HasOne("IntercityTransportManagementSystem.Models.Reservation", "ReturnReservation")
-                        .WithMany()
-                        .HasForeignKey("ReturnReservationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("IntercityTransportManagementSystem.Models.BusSchedule", "Schedule")
                         .WithMany("Reservations")
                         .HasForeignKey("ScheduleId")
@@ -548,8 +535,6 @@ namespace IntercityTransportManagementSystem.Migrations
                         .HasConstraintName("FK__Reservati__SeatI__4D94879B");
 
                     b.Navigation("Passenger");
-
-                    b.Navigation("ReturnReservation");
 
                     b.Navigation("Schedule");
 

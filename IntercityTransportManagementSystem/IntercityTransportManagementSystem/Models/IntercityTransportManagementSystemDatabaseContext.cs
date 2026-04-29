@@ -144,6 +144,11 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
                 .HasForeignKey(d => d.SeatId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Reservati__SeatI__4D94879B");
+
+            entity.HasOne(r => r.ReturnReservation)
+                  .WithMany()
+                  .HasForeignKey(r => r.ReturnReservationId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Route>(entity =>

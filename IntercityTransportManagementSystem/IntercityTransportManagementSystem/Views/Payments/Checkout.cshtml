@@ -1,0 +1,158 @@
+﻿@using IntercityTransportManagementSystem.Models
+@using IntercityTransportManagementSystem.Enums
+@model IntercityTransportManagementSystem.Models.Reservation
+
+@{
+	ViewData["Title"] = "Плащане на билет";
+	decimal euroCourse = 1.95583m;
+	decimal eurPrice = ViewBag.TotalPrice;
+	decimal priceInLeva = eurPrice * euroCourse;
+}
+
+<div class="container mt-4">
+	<div class="row">
+		<div class="col-md-8">
+			<div class="card shadow border-0">
+				<div class="card-body p-4">
+					<h3 class="card-title mb-4"><i class="bi bi-wallet2"></i>Изберете начин на плащане</h3>
+
+					<form asp-action="ProcessPayment" method="post" id="paymentForm">
+						<input type="hidden" name="reservationId" value="@Model.Id" />
+
+						<div class="form-check border rounded p-3 mb-3 custom-radio-box">
+							<input type="radio" class="form-check-input fs-4 ms-0 me-3" name="paymentMethod" id="methodOnline" value="Online" checked onchange="togglePaymentInfo()" />
+							<label class="form-check-label w-100" for="methodOnline" style="cursor: pointer;">
+								<span class="fw-bold fs-5 d-block text-primary"><i class="bi bi-credit-card"></i>Плащане с карта</span>
+								<span class="text-muted small">Сигурно плащане през системата с дебитна или кредитна карта.</span>
+							</label>
+						</div>
+
+						<div class="form-check border rounded p-3 mb-3 custom-radio-box">
+							<input type="radio" class="form-check-input fs-4 ms-0 me-3" name="paymentMethod" id="methodCash" value="Cash" onchange="togglePaymentInfo()" />
+							<label class="form-check-label w-100" for="methodCash" style="cursor: pointer;">
+								<span class="fw-bold fs-5 d-block text-secondary"><i class="bi bi-cash-coin"></i>Плащане на място (на каса/шофьор)</span>
+								<span class="text-muted small">Ще платя на шофьора при качване или на касата на автогарата.</span>
+							</label>
+						</div>
+
+						<div id="onlineInfo">
+							<div class="alert alert-info mb-3">
+								<i class="bi bi-shield-lock"></i>Вашите данни са защитени. Моля, въведете детайлите на картата.
+							</div>
+
+							<div class="card bg-light border-secondary mb-4">
+								<div class="card-body">
+									<div class="mb-3">
+										<label class="form-label text-muted small fw-bold">Номер на карта</label>
+										<input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" />
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-6">
+										<label class="form-label text-muted small fw-bold">Валидна до</label>
+										<input type="text" class="form-control" placeholder="ММ/ГГ" maxlength="5" />
+									</div>
+									<div class="col-6">
+										<label class="form-label text-muted small fw-bold">CVV</label>
+										<input type="password" class="form-control"placeholder="123" maxlength="3" />
+									</div>
+								</div>
+								<div class="mt-3">
+									<label class="form-label text-muted small fw-bold">Име на картодържател</label>
+									<input type="text" class="form-control" placeholder="Име и фамилия (на латиница)"/>
+								</div>
+							</div>
+						</div>
+
+						<div id="onSiteInfo" class="alert alert-warning" style="display: none;">
+							<i class="bi bi-exclamation-triangle"></i> <strong>Важно:</strong> Вашата резервация ще бъде запазена. 
+							Моля, заплатете билета си поне 5 минути преди обявения час на тръгване, в противен случай резервацията може да бъде анулирана.
+						</div>
+
+						<hr class="my-4" />
+
+						<input type="submit" id="submitBtn" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" value="Плати @eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)" />
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-4">
+			<div class="card shadow border-0 sticky-top" style="top: 20px;">
+				<div class="card-header bg-dark text-white p-3">
+					<h5 class="card-title mb-0">Детайли за билета</h5>
+				</div>
+
+				<div class="card-body p-4">
+					<ul class="list-group list-group-flush mb-3">
+						<li class="list-group-item d-flex justify-content-between px-0">
+							<span class="text-muted">Пътник:</span>
+							<span class="fw-bold text-end">@Model.Passenger.Name @Model.Passenger.LastName</span>
+						</li>
+						<li class="list-group-item d-flex justify-content-between px-0">
+							<span class="text-muted">Маршрут:</span>
+							<span class="fw-bold text-end">@Model.Schedule.Route.StartDestination - @Model.Schedule.Route.FinalDestination</span>
+						</li>
+						<li class="list-group-item d-flex justify-content-between px-0">
+							<span class="text-muted">Дата и час:</span>
+							<span class="fw-bold text-end">@Model.Schedule.TravelDate.ToString("dd.MM.yyyy") <br /> @Model.Schedule.DepartureTime.ToString("HH:mm") ч.</span>
+						</li>
+						<li class="list-group-item d-flex justify-content-between px-0">
+							<span class="text-muted">Място:</span>
+							<span class="fw-bold text-end">@Model.Seat.Number</span>
+						</li>
+						<li class="list-group-item d-flex justify-content-between px-0">
+							<span class="text-muted">Тип на билета:</span>
+							<span class="fw-bold text-end">@(Model.TicketType == TicketType.Ednoposochen ? "Еднопосочен" : "Двупосочен (с отстъпка)")</span>
+						</li>
+					</ul>
+
+					<div class="d-flex justify-content-between border-top pt-3">
+						<span class="fs-5 fw-bold">Общо за плащане:</span>
+						<span class="fs-5 fw-bold text-success">@eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.custom-radio-box {
+		transition: all 0.2s ease-in-out;
+	}
+
+	.custom-radio-box:hover {
+		background-color: #f8f9fa;
+		border-color: #adb5bd !important;
+	}
+
+	.form-check-input:checked {
+		background-color: #0d6efd;
+		border-color: #0d6efd;
+	}
+</style>
+
+<script>
+	function togglePaymentInfo() {
+		const isOnline = document.getElementById('methodOnline').checked;
+		const submitBtn = document.getElementById('submitBtn');
+
+		const priceBGN = '@priceInLeva.ToString("F2") лв.';
+		const priceEUR = '@eurPrice.ToString("F2") €';
+
+		if(isOnline){
+			document.getElementById('onlineInfo').style.display = 'block';
+			document.getElementById('onSiteInfo').style.display = 'none';
+
+			submitBtn.value = 'Плати ' + priceEUR + ' (' + priceBGN + ')' + ' (Онлайн)';
+			submitBtn.className = 'btn btn-primary btn-lg w-100 fw-bold shadow-sm';
+		} else {
+			document.getElementById('onlineInfo').style.display = 'none';
+			document.getElementById('onSiteInfo').style.display = 'block';
+
+			submitBtn.value = 'Запази билета (Плащане на място)';
+			submitBtn.className = 'btn btn-secondary btn-lg w-100 fw-bold shadow-sm';
+		}
+	}
+</script>

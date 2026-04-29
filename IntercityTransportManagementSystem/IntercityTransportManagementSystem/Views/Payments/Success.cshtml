@@ -1,0 +1,218 @@
+﻿@using IntercityTransportManagementSystem.Enums
+@model IntercityTransportManagementSystem.Models.Reservation
+
+@{
+	ViewData["Title"] = "Успешна резервация";
+	var payment = ViewBag.Payment as Payment;
+	bool isPaidOnline = payment != null;
+
+	var outbound = ViewBag.Outbound as IntercityTransportManagementSystem.Models.Reservation ?? Model;
+	var returnTrip = ViewBag.Return as IntercityTransportManagementSystem.Models.Reservation;
+
+	decimal euroCourse = 1.95583m;
+	decimal eurPrice = 0;
+
+	if (isPaidOnline)
+	{
+		eurPrice = payment.Sum;
+	}
+	else
+	{
+		if (Model.TicketType == TicketType.Dvuposochen && returnTrip != null && outbound.Id != returnTrip.Id)
+		{
+			eurPrice = outbound.Schedule.Route.TicketPrice + returnTrip.Schedule.Route.TicketPrice;
+			eurPrice *= 0.90m;
+		}
+		else
+		{
+			eurPrice = Model.Schedule.Route.TicketPrice;	
+		}
+	}
+
+	decimal priceInLeva = eurPrice * euroCourse;
+}
+
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-6 col-lg-5">
+			<div class="text-center mb-4">
+				@if (isPaidOnline)
+				{
+					<div class="card border-0 shadow-lg">
+						<i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>  <h2 class="mt-2 fw-bold text-success">Плащането е успешно!</h2>
+						<p class="text-dark">Вашият билет е потвърден и платен.</p>
+					</div>
+				}
+				else
+				{
+					<div class="card border-0 shadow-lg">
+						<h2 class="mt-2 fw-bold text-warning">Резервацията е потвърдена!</h2>
+						<p class="text-muted">Моля, платете си билета на място (на шофьора или на касата на автогарата) преди пътуване.</p>
+					</div>
+					
+				}
+			</div>
+
+			<div class="card border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+				<div class="card-header bg-primary text-white p-4 text-center">
+					<h5 class="mb-0 text-uppercase tracking-wide">Дигитален билет</h5>
+					№ @Model.Id.ToString("D6")
+				</div>
+
+				<div class="card-body p-4">
+					<div class="text-center mb-4">
+						<img src="@Url.Action("GenerateTicketQRCode", "Payments", 
+							new { reservationId = Model.Id })" alt="QR Code" class="img-fluid" 
+							style="max-width: 150px; border: 5px solid white; border-radius: 10px; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" />
+							<div class="mt-2 text-muted">Може да го сканирате при качване в автобуса.</div>
+					</div>
+
+					<hr />
+
+					<div class="card-body p-4">
+						@if (Model.TicketType == TicketType.Dvuposochen && returnTrip != null)
+						{
+							<div class="mb-4 p-3 border rounded bg-light">
+								<h6 class="text-primary fw-bold border-bottom pb-2">Отиване</h6>
+								<div class="row">
+									<div class="col-6">
+										<small class="text-muted d-block fw-bold">Маршрут</small>
+										<span class="fw-bold fs-5">@outbound.Schedule.Route.StartDestination - @outbound.Schedule.Route.FinalDestination</span>
+									</div>
+									<div class="col-6 text-end">
+										<small class="text-muted d-block fw-bold">Място</small>
+										<span class="fw-bold fs-3 text-primary">@outbound.Seat.Number</span>
+									</div>
+								</div>
+								<div class="mt-2">
+									<small class="text-muted d-block fw-bold">Дата и час</small>
+									<span class="fw-bold fs-5">
+										@outbound.Schedule.TravelDate.ToString("dd.MM.yyyy") <br />
+										@outbound.Schedule.DepartureTime.ToString("HH:mm") ч.
+									</span>
+								</div>
+							</div>
+							
+							<div class="mb-4 p-3 border rounded bg-light">
+								<h6 class="text-success fw-bold border-bottom pb-2">Връщане</h6>
+								<div class="row">
+									<div class="col-6">
+										<small class="text-muted d-block fw-bold">Маршрут</small>
+										<span class="fw-bold fs-5">@returnTrip.Schedule.Route.StartDestination - @returnTrip.Schedule.Route.FinalDestination</span>
+									</div>
+									<div class="col-6 text-end">
+										<small class="text-muted d-block fw-bold">Място</small>
+										<span class="fw-bold fs-3 text-primary">@returnTrip.Seat.Number</span>
+									</div>
+								</div>
+								<div class="mt-2">
+									<small class="text-muted d-block fw-bold">Дата и час</small>
+									<span class="fw-bold fs-5">
+										@returnTrip.Schedule.TravelDate.ToString("dd.MM.yyyy") <br />
+										@returnTrip.Schedule.DepartureTime.ToString("HH:mm") ч.
+									</span>
+								</div>
+							</div>
+						}
+						else
+						{
+							<div class="row mb-3">
+								<div class="col-6">
+									<small class="text-muted d-block fw-bold">От</small>
+									<span class="fw-bold fs-5">@Model.Schedule.Route.StartDestination</span>
+								</div>
+
+								<div class="col-6">
+									<small class="text-muted d-block fw-bold">До</small>
+									<span class="fw-bold fs-5">@Model.Schedule.Route.FinalDestination</span>
+								</div>
+							</div>
+
+							<div class="row mb-3 bg-light p-2 rounded">
+
+								<div class="col-6">
+									<small class="text-muted d-block fw-bold">Дата и час</small>
+									<span class="fw-bold fs-5">
+										@Model.Schedule.TravelDate.ToString("dd.MM.yyyy") <br />
+										@Model.Schedule.DepartureTime.ToString("HH:mm") ч.
+									</span>
+								</div>
+
+								<div class="col-6 text-end">
+									<small class="text-muted d-block fw-bold">Място</small>
+									<span class="fw-bold fs-3 text-primary">@Model.Seat.Number</span>
+								</div>
+							</div>
+						}
+
+						<div class="mb-3">
+							<small class="text-muted d-block fw-bold">Пътник</small>
+							<span class="fw-bold fs-5">@Model.Passenger.Name @Model.Passenger.LastName</span>
+						</div>
+						
+						<div class="mb-3">
+							<small class="text-muted d-block fw-bold">Тип на билета</small>
+							<span class="fw-bold fs-5">@(Model.TicketType == TicketType.Ednoposochen ? "Еднопосочен" : "Двупосочен (с 10% отстъпка)")</span>
+							@if (Model.TicketType == TicketType.Dvuposochen)
+							{
+								<div class="alert alert-sm alert-info mt-2" style="font-size: 0.8rem;">
+									<i class="bi bi-info-circle"></i>  Този билет е валиден за връщане в рамките на 30 дни от датата на отиване.
+								</div>
+							}
+						</div>
+
+						<hr />
+
+						<div class="d-flex justify-content-between align-items-center">
+							<div>
+								<small class="text-muted d-block fw-bold">Обща цена</small>
+								<span class="fw-bold fs-5 text-dark">@eurPrice.ToString("F2") € 
+									(@priceInLeva.ToString("F2") лв.)
+								</span>
+							</div>
+							
+							<div>
+								@if (isPaidOnline)
+								{
+									<span class="badge bg-success p-2"><i class="bi bi-check-lg"></i> Платено</span>
+								}
+								else
+								{
+									<span class="badge bg-warning text-dark p-2"><i class="bi bi-clock"></i> За плащане</span>
+								}
+							</div>
+						</div>
+					</div>
+
+					<div class="card-footer text-center bg-light text-muted p-3 fw-bold">
+						Приятно пътуване! Покажете този екран на шофьора.
+					</div>
+				</div>
+
+				<div class="text-center mt-4 mb-5">
+					 <a asp-controller="Account" asp-action="MyHistory" class="btn btn-outline-primary me-2">Към моите резервации и билети</a>
+					 <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Разпечатай</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	@@media print {
+		body * {
+			visibility: hidden;
+		}
+		.card, .card * {
+			visibility: visible;
+		}
+		.card {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			box-shadow: none !important;
+		}
+	}
+</style>

@@ -1,0 +1,83 @@
+﻿@model IEnumerable<IntercityTransportManagementSystem.Models.BusSchedule>
+
+@{
+	ViewData["Title"] = "Избор на връщане";
+}
+
+<div class="container mt-4">
+	<div class="card shadow p-4 border-0">
+		<div class="text-center mb-4">
+			<span class="badge bg-info text-dark mb-2"> Стъпка 2 от 2</span>
+			<h2 class="fw-bold">Изберете обратен курс</h2>
+			<p class="text-muted">Посока: <strong>@Model.FirstOrDefault()?.Route.StartDestination - @Model.FirstOrDefault()?.Route.FinalDestination</strong></p>
+		</div>
+
+		<div class="row justify-content-center mb-4">
+			<div class="col-md-6">
+				<form method="get" class="card p-3 bg-light border-0">
+					<input type="hidden" name="outboundReservationId" value="@ViewBag.OutboundReservationId" />
+					<input type="hidden" name="passengerId" value="@ViewBag.PassengerId" />
+
+					<label class="form-label fw-bold small">Филтриране по дата на връщане:</label>
+					<div class="input-group">
+						<input type="date" name="returnDate" class="form-control"
+							   value="@ViewBag.SelectedReturnDate"
+							   min="@ViewBag.OutboundDate.ToString("yyyy-MM-dd")" />
+						<input type="submit" class="btn btn-primary" value="Виж курсовете" />
+						@if (!string.IsNullOrEmpty(ViewBag.SelectedReturnDate))
+						{
+							<a asp-action="SelectReturnTrip"
+							   asp-route-outboundReservationId="@ViewBag.OutboundReservationId"
+							   asp-route-passengerId="@ViewBag.PassengerId"
+							   class="btn btn-outline-secondary">
+							   Изчисти
+							</a>	
+						}
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<div class="table-responsive">
+			@if (!Model.Any())
+			{
+				<div class="alert alert-warning text-center">
+					Няма намерени курсове за избраните критерии.
+				</div>
+			}
+			else
+			{
+				<table class="table table-hover align-middle">
+					<thead class="table-info align-middle">
+						<tr>
+							<th>Маршрут</th>
+							<th>Дата</th>
+							<th>Час</th>
+							<th>Автобус</th>
+							<th class="text-end">Действие</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var item in Model)
+						{
+							<tr>
+								<td>@item.Route.StartDestination - @item.Route.FinalDestination</td>
+								<td>@(((DateOnly)item.TravelDate).ToString("dd.MM.yyyy"))</td>
+								<td><span class="badge bg-primary">@item.DepartureTime.ToString("HH:mm") ч.</span></td>
+								<td>@item.Bus.RegistrationNumber</td>
+								<td class="text-end">
+									<form asp-action="SelectReturnTrip" method="post">
+										<input type="hidden" name="selectedReturnScheduleId" value="@item.Id" />
+										<input type="hidden" name="outboundReservationId" value="@ViewBag.OutboundReservationId" />
+										<input type="hidden" name="passengerId" value="@ViewBag.PassengerId" />
+										<input type="submit" class="btn btn-success" px-4 value="Избери място" />
+									</form>
+								</td>
+							</tr>	
+						}
+					</tbody>
+				</table>	
+			}
+		</div>
+	</div>
+</div>

@@ -1,4 +1,5 @@
-﻿using IntercityTransportManagementSystem.Models;
+﻿using IntercityTransportManagementSystem.Enums;
+using IntercityTransportManagementSystem.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace IntercityTransportManagementSystem.ViewModels
@@ -15,9 +16,11 @@ namespace IntercityTransportManagementSystem.ViewModels
         public int ScheduleId { get; set; }
 
         [Display(Name = "Място")]
-        public int SeatId { get; set; }
+        public int? SeatId { get; set; }
 
-        public IEnumerable<BusSchedule> Schedules { get; set; }
-        public IEnumerable<BusSeat> Seats { get; set; }
+        public TicketType TicketType { get; set; }
+        
+        public IEnumerable<BusSchedule> ?Schedules { get; set; }
+        public IEnumerable<BusSeat>? Seats { get; set; }
     }
 }

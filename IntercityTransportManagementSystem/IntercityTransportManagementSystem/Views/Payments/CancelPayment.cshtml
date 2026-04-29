@@ -1,0 +1,65 @@
+﻿@using IntercityTransportManagementSystem.Models
+@using IntercityTransportManagementSystem.Enums
+@model Payment
+
+@{
+	ViewData["Title"] = "Анулиране на плащане";
+
+	decimal euroCourse = 1.95583m;
+	decimal eurPrice = Model.Reservation.Schedule.Route.TicketPrice;
+	decimal priceInLeva = eurPrice * euroCourse;
+
+	bool isPaidOnline = Model.PaymentMethod == PaymentMethod.Online;
+}
+
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-6">
+			<div class="card border-danger shadow">
+				<div class="card-header bg-danger text-white text-center">
+					<h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Потвърждение за анулиране</h4>
+				</div>
+				<div class="card-body">
+					<p class="mb-0 text-center">Сигурни ли сте, че искате да анулирате това плащане и да освободите мястото?</p>
+					<hr />
+					<dl class="row mb-0">
+						<dt class="col-sm-5">Пътник:</dt>
+						<dd class="col-sm-7">@Model.Passenger.Name @Model.Passenger.LastName</dd>
+						
+						<dt class="col-sm-5">Машрут:</dt>
+						<dd class="col-sm-7">@Model.Reservation.Schedule.Route.StartDestination - @Model.Reservation.Schedule.Route.FinalDestination</dd>
+						
+						<dt class="col-sm-5">Дата и час:</dt>
+						<dd class="col-sm-7">@Model.Reservation.Schedule.TravelDate.ToString("dd.MM.yyyy") @Model.Reservation.Schedule.DepartureTime.ToString("HH:mm")</dd>
+						
+						
+						<dt class="col-sm-5">Платена сума:</dt>
+						<dd class="col-sm-7">@eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)</dd>
+					</dl>
+				</div>
+				
+				@if (Model.Reservation == null)
+				{
+					<div class="alert alert-danger">Reservation is NULL</div>	
+				}
+				@if (Model.Reservation?.Schedule == null)
+				{
+					<div class="alert alert-danger">Schedule is NULL</div>	
+				}
+				@if (Model.Reservation?.Schedule?.Route == null)
+				{
+					<div class="alert alert-danger">Route is NULL</div>	
+				}
+
+				<div class="card-footer bg-light d-flex justify-content-between">
+					<a asp-action="Index" class="btn btn-secondary">Отказ</a>
+					<form asp-action="CancelPayment" method="post">
+						@Html.AntiForgeryToken()
+						<input type="hidden" asp-for="Id" name="id" />
+						<button type="submit" class="btn btn-danger" data-ajax="false"><i class="bi bi-trash"></i> Анулирай билета</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

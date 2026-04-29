@@ -63,6 +63,12 @@ namespace IntercityTransportManagementSystem.Controllers
                 case "estimatedDuration_descending":
                     routesQuery = routesQuery.OrderByDescending(r => r.EstimatedDuration);
                     break;
+                case "ticketPrice":
+                    routesQuery = routesQuery.OrderBy(r => r.TicketPrice);
+                    break;
+                case "ticketPrice_descending":
+                    routesQuery = routesQuery.OrderByDescending(r => r.TicketPrice);
+                    break;
                 default:
                     routesQuery = routesQuery.OrderBy(r => r.StartDestination);
                     break;
@@ -120,7 +126,7 @@ namespace IntercityTransportManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Create([Bind("StartDestination,FinalDestination, Distance, EstimatedDuration")] Route route)
+        public async Task<IActionResult> Create([Bind("StartDestination,FinalDestination, Distance, EstimatedDuration, TicketPrice")] Route route)
         {
             if (ModelState.IsValid)
             {
@@ -154,7 +160,7 @@ namespace IntercityTransportManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StartDestination,FinalDestination, Distance, EstimatedDuration")] Route route)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,StartDestination,FinalDestination, Distance, EstimatedDuration, TicketPrice")] Route route)
         {
             if (id != route.Id)
             {
@@ -175,6 +181,7 @@ namespace IntercityTransportManagementSystem.Controllers
                     existingRoute.FinalDestination = route.FinalDestination;
                     existingRoute.Distance = route.Distance;
                     existingRoute.EstimatedDuration = route.EstimatedDuration;
+                    existingRoute.TicketPrice = route.TicketPrice;
 
                     await _context.SaveChangesAsync();
                 }

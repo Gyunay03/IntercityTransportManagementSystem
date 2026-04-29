@@ -1,4 +1,6 @@
-﻿namespace IntercityTransportManagementSystem.ViewModels
+﻿using IntercityTransportManagementSystem.Enums;
+
+namespace IntercityTransportManagementSystem.ViewModels
 {
     public class SeatMapViewModel
     {
@@ -7,6 +9,8 @@
         public string BusRegistrationNumber { get; set; }
         public string RouteName { get; set; }
         public DateOnly TravelDate { get; set; }
+        public TicketType TicketType { get; set; }
+        public int? OutboundReservationId { get; set; }
 
         public List<SeatDto> Seats { get; set; }
     }

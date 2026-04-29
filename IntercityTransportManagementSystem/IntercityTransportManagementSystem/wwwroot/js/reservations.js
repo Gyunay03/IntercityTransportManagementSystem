@@ -6,10 +6,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initDynamicElements();
 
+    /*
     document.getElementById("filterForm")?.addEventListener("submit", function (e) {
         e.preventDefault();
-        fetchReservations();
-    });
+
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData).toString();
+        const url = `${window.location.pathname}?${params}`;
+
+        fetchReservations(url);
+    }); */
 });
 
 function fetchReservations(url) {
@@ -18,7 +24,11 @@ function fetchReservations(url) {
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(res => res.text())
         .then(html => {
-            document.getElementById("reservationsContainer").innerHTML = html;
+            //document.getElementById("reservationsContainer").innerHTML = html;
+            window.location.href = url;
+
+            window.history.pushState(null, '', url);
+
             initDynamicElements();
         })
         .catch(err => console.error(err));

@@ -38,7 +38,12 @@ public partial class Reservation
 
     [Display(Name = "Време на заключване на място при избор")]
     public DateTime? LockExpirationTime { get; set; }
-    
+
+    [Display(Name = "Тип на билета")]
+    public TicketType TicketType { get; set; } 
+
+    public int? ReturnReservationId { get; set; }
+    public Reservation? ReturnReservation { get; set; }
     public virtual Passenger Passenger { get; set; } = null!;
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

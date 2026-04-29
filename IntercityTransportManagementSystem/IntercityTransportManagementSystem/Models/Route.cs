@@ -19,5 +19,8 @@ public partial class Route
     
     [Display(Name = "Време за пътуване")]
     public TimeSpan EstimatedDuration { get; set; }
+
+    [Display(Name = "Цена на билет")]
+    public decimal TicketPrice { get; set; }
     public virtual ICollection<BusSchedule> BusSchedules { get; set; } = new List<BusSchedule>();
 }

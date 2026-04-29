@@ -25,6 +25,18 @@
         
         <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.EstimatedDuration)</dt>
         <dd class = "col-sm-8">@Html.DisplayFor(model => model.EstimatedDuration)</dd>
+        
+        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.TicketPrice)</dt>
+        <dd class = "col-sm-8">
+            @{
+                decimal euroCourse = 1.95583m;
+                //decimal priceInEuro = item.TicketPrice / euroCourse;
+                decimal priceInLeva = Model.TicketPrice * euroCourse;
+            }
+            <span class="fw-bolder">(@Model.TicketPrice.ToString("F2") €)</span>
+            /
+            <span class="text-black">@priceInLeva.ToString("F2") лв.</span>
+        </dd>
     </dl>
     
     <form asp-action="Delete" class="mt-4">

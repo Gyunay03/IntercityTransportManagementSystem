@@ -3,6 +3,7 @@ using IntercityTransportManagementSystem.Models;
 using IntercityTransportManagementSystem.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -326,6 +327,61 @@ namespace IntercityTransportManagementSystem.Controllers
                 var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(rawData));
                 return Convert.ToBase64String(bytes);
             }
+        }
+
+        // Метод за визуализиране на направените резервациите и историята на плащанията
+        [Authorize(Roles = "Passenger")]
+        [HttpGet]
+        public async Task<IActionResult> MyHistory(int page = 1, int pageSize = 20)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out int userIdInt))
+            {
+                return Unauthorized();
+            }
+
+            var passenger = await _context.Passengers.FirstOrDefaultAsync(p => p.UserId == userIdInt);
+
+            if (passenger == null)
+            {
+                return NotFound("Пътникът не е намерен в базата данни.");
+            }
+
+            // Странициране
+            var allReservations = await _context.Reservations
+                .CountAsync(r => r.PassengerId == passenger.Id);
+
+            var reservations = await _context.Reservations
+                .Include(r => r.Schedule)
+                    .ThenInclude(s => s.Route)
+                .Include(r => r.Seat)
+                .Where(r => r.PassengerId == passenger.Id)
+                .OrderByDescending(r => r.Schedule.TravelDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var payments = await _context.Payments
+                .Include(p => p.Reservation)
+                    .ThenInclude(r => r.Schedule)
+                        .ThenInclude(s => s.Route)
+                .Where(p => p.PassengerId == passenger.Id)
+                .OrderByDescending(p => p.PaymentDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var viewModel = new MyHistoryViewModel
+            {
+                ActiveOrPastReservations = reservations,
+                PastPayments = payments,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(allReservations / (double)pageSize)
+            };
+
+            return View(viewModel);
         }
     }
 }

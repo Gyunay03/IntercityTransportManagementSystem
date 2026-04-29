@@ -12,6 +12,7 @@ using IntercityTransportManagementSystem.Enums;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
 using IntercityTransportManagementSystem.Hubs;
+using IntercityTransportManagementSystem.Services;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -21,15 +22,17 @@ namespace IntercityTransportManagementSystem.Controllers
 
         private readonly IHubContext<ReservationHub> _hub;
 
-        public ReservationsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub)
+        private readonly IReservationService _reservationService;
+        public ReservationsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub, IReservationService reservationService)
         {
             _context = context;
             _hub = hub;
+            _reservationService = reservationService;
         }
 
         // GET: Reservations
         [HttpGet]
-        public async Task<IActionResult> Index(string searchString, string sortOrder, string statusFilter, DateTime? reservationTimeFrom, DateTime? reservationTimeTo, DateOnly? travelDate, ReservationStatus? status, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> Index(ReservationIndexViewModel model, int page = 1, int pageSize = 20)
         {
             var reservationsQuery = _context.Reservations
                 .Include(r => r.Passenger)
@@ -42,45 +45,45 @@ namespace IntercityTransportManagementSystem.Controllers
                 .AsQueryable();
 
             // Търсене по име и фамилия на пътници и/или разписание
-            if (!string.IsNullOrWhiteSpace(searchString))
+            if (!string.IsNullOrWhiteSpace(model.SearchString))
             {
                 reservationsQuery = reservationsQuery.Where(r =>
-                    r.Passenger.Name.Contains(searchString) ||
-                    r.Passenger.LastName.Contains(searchString) ||
-                    (r.Passenger.Name + " " + r.Passenger.LastName).Contains(searchString) ||
+                    r.Passenger.Name.Contains(model.SearchString) ||
+                    r.Passenger.LastName.Contains(model.SearchString) ||
+                    (r.Passenger.Name + " " + r.Passenger.LastName).Contains(model.SearchString) ||
 
-                    r.Schedule.Route.StartDestination.Contains(searchString) ||
-                    r.Schedule.Route.FinalDestination.Contains(searchString) ||
-                    (r.Schedule.Route.StartDestination + " - " + r.Schedule.Route.FinalDestination).Contains(searchString));
+                    r.Schedule.Route.StartDestination.Contains(model.SearchString) ||
+                    r.Schedule.Route.FinalDestination.Contains(model.SearchString) ||
+                    (r.Schedule.Route.StartDestination + " - " + r.Schedule.Route.FinalDestination).Contains(model.SearchString));
             }
 
             // Филтриране от дата на резервация
-            if (reservationTimeFrom.HasValue)
+            if (model.ReservationTimeFrom.HasValue)
             {
-                reservationsQuery = reservationsQuery.Where(r => r.ReservationTime >= reservationTimeFrom.Value);
+                reservationsQuery = reservationsQuery.Where(r => r.ReservationTime >= model.ReservationTimeFrom.Value);
             }
 
             // Филтриране до дата на резервация
-            if (reservationTimeTo.HasValue)
+            if (model.ReservationTimeTo.HasValue)
             {
-                var toDate = reservationTimeTo.Value.Date.AddDays(1);
+                var toDate = model.ReservationTimeTo.Value.Date.AddDays(1);
                 reservationsQuery = reservationsQuery.Where(r => r.ReservationTime < toDate);
             }
 
             // Филтриране по дата на пътуване
-            if (travelDate.HasValue)
+            if (model.TravelDate.HasValue)
             {
-                reservationsQuery = reservationsQuery.Where(r => r.Schedule.TravelDate == travelDate.Value);
+                reservationsQuery = reservationsQuery.Where(r => r.Schedule.TravelDate == model.TravelDate.Value);
             }
 
             // Филтриране по статус
-            if (status.HasValue)
+            if (model.Status.HasValue)
             {
-                reservationsQuery = reservationsQuery.Where(r => r.Status == status.Value);
+                reservationsQuery = reservationsQuery.Where(r => r.Status == model.Status.Value);
             }
 
             // Сортиране
-            switch (sortOrder)
+            switch (model.SortOrder)
             {
                 case "reservationId":
                     reservationsQuery = reservationsQuery.OrderBy(r => r.Id);
@@ -206,12 +209,12 @@ namespace IntercityTransportManagementSystem.Controllers
             var viewModel = new ReservationIndexViewModel
             {
                 Reservations = reservations,
-                SearchString = searchString,
-                SortOrder = sortOrder,
-                Status = status,
-                ReservationTimeFrom = reservationTimeFrom,
-                ReservationTimeTo = reservationTimeTo,
-                TravelDate = travelDate,
+                SearchString = model.SearchString,
+                SortOrder = model.SortOrder,
+                Status = model.Status,
+                ReservationTimeFrom = model.ReservationTimeFrom,
+                ReservationTimeTo = model.ReservationTimeTo,
+                TravelDate = model.TravelDate,
                 CurrentPage = page,
                 TotalPages = totalPages
             };
@@ -290,6 +293,16 @@ namespace IntercityTransportManagementSystem.Controllers
                 return Json(new { success = false, message = "Мястото вече е заето или временно заключено." });
             }
 
+            var existingLock = await _context.BusSeatLocks.FirstOrDefaultAsync(l =>
+                l.ScheduleId == scheduleId &&
+                l.SeatId == seatId &&
+                (l.PassengerId == passengerId || l.UserId == currentUserId));
+
+            if (existingLock != null && existingLock.PassengerId != passengerId)
+            {
+                return Json(new { success = false, message = "Това място вече е избрано от друг потребител." });
+            }
+
             var lockSeat = new BusSeatLock
             {
                 ScheduleId = scheduleId,
@@ -307,7 +320,7 @@ namespace IntercityTransportManagementSystem.Controllers
             {
                 await _hub.Clients.AllExcept(connectionId).SendAsync("SeatLocked", new 
                 {
-                    seatId, scheduleId 
+                    seatId, scheduleId, lockedBy = passengerId
                 });
             }
             else
@@ -413,8 +426,6 @@ namespace IntercityTransportManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ReservationCreateViewModel reservation)
         {
-            ModelState.Clear();
-
             if (User.IsInRole("Passenger"))
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -455,7 +466,12 @@ namespace IntercityTransportManagementSystem.Controllers
                 return View(reservation);
             }
 
-            return RedirectToAction(nameof(SeatMap), new { scheduleId = reservation.ScheduleId, passengerId = reservation.PassengerId });
+            return RedirectToAction(nameof(SeatMap), 
+                new 
+                { scheduleId = reservation.ScheduleId, 
+                  passengerId = reservation.PassengerId,
+                  ticketType = reservation.TicketType
+                });
         }
 
         // GET: Reservations/Edit/5
@@ -795,7 +811,7 @@ namespace IntercityTransportManagementSystem.Controllers
         // Метод за визуализиране на картата с места и тяхното състоянието (свободни, заети, заключени)
         [HttpGet]
         [Authorize]
-        public IActionResult SeatMap(int scheduleId, int? passengerId)
+        public IActionResult SeatMap(int scheduleId, int? passengerId, TicketType ticketType, int? outboundReservationId = null)
         {
             Passenger passenger = null;
 
@@ -868,7 +884,9 @@ namespace IntercityTransportManagementSystem.Controllers
                 BusRegistrationNumber = schedule.Bus.RegistrationNumber,
                 RouteName = $"{schedule.Route.StartDestination} - {schedule.Route.FinalDestination}",
                 TravelDate = schedule.TravelDate,
-                Seats = seats
+                Seats = seats,
+                TicketType = ticketType,
+                OutboundReservationId = outboundReservationId
             };
 
             return View(viewModel);
@@ -878,7 +896,7 @@ namespace IntercityTransportManagementSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> ConfirmSeat(int scheduleId, int seatId, int passengerId)
+        public async Task<IActionResult> ConfirmSeat(int scheduleId, int seatId, int passengerId, TicketType ticketType, int? outboundReservationId = null)
         {
             if (seatId <= 0)
             {
@@ -886,71 +904,26 @@ namespace IntercityTransportManagementSystem.Controllers
                 return RedirectToAction("SeatMap", new { scheduleId, passengerId });
             }
 
-            // Проверка на мястото в автобуса дали вече не е резервирано от друг потребител
-            var now = DateTime.Now;
+            var result = await _reservationService.ConfirmSeatAsync(scheduleId, seatId, passengerId, ticketType, outboundReservationId);
 
-            var isSeatReserved = await _context.Reservations.AnyAsync(r =>
-                r.ScheduleId == scheduleId &&
-                r.SeatId == seatId &&
-                r.IsActive &&
-                (
-                    r.Status == ReservationStatus.Confirmed ||
-                    (r.Status == ReservationStatus.Pending && r.ExpirationTime > now)
-                ));
-
-            var isSeatLockedByAnother = await _context.BusSeatLocks.AnyAsync(l =>
-                l.ScheduleId == scheduleId &&
-                l.SeatId == seatId &&
-                l.ExpiryTime > now &&
-                l.PassengerId != passengerId);
-
-            // Проверка дали мястото вече е заето или заключено
-            if (isSeatReserved || isSeatLockedByAnother)
+            if (!result.Success)
             {
-                TempData["Error"] = "Избраното място вече е заето или временно заключено.";
+                TempData["Error"] = result.Message;
                 return RedirectToAction("SeatMap", new { scheduleId, passengerId });
             }
 
-            var existingLock = await _context.BusSeatLocks
-                .FirstOrDefaultAsync(l =>
-                    l.ScheduleId == scheduleId &&
-                    l.SeatId == seatId);
+            TempData["Success"] = "Мястото е успешно потвърдено!";
 
-            if (existingLock != null)
+            if (ticketType == TicketType.Dvuposochen && outboundReservationId == null)
             {
-                _context.BusSeatLocks.Remove(existingLock);
+                return RedirectToAction("SelectReturnTrip", new { outboundReservationId = result.ReservationId, passengerId });
             }
 
-            var newReservation = new Reservation
-            {
-                ScheduleId = scheduleId,
-                SeatId = seatId,
-                PassengerId = passengerId,
-                ReservationTime = now,
-                Status = ReservationStatus.Pending,
-                IsActive = true,
-                ExpirationTime = now.AddMinutes(60)
-            };
-
-            try
-            {
-                _context.Add(newReservation);
-                await _context.SaveChangesAsync();
-                
-                await _hub.Clients.All.SendAsync("SeatReserved", new { scheduleId, seatId });
-
-                TempData["Success"] = "Мястото е успешно потвърдено!";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = "Възникна грешка при потвърждаването на място. Моля, опитайте отново.";
-                return RedirectToAction("SeatMap", new { scheduleId, passengerId });
-            }
+            return RedirectToAction("Checkout", "Payments", new { reservationId = result.ReservationId });
         }
 
         // Метод за попълване на падащите менюта
-        private  async Task FillDropdowns(int? selectedPassengerId = null, int? selectedRouteId = null, int? selectedScheduleId = null, int? selectedSeatId = null, int? currentReservationId = null)
+        private async Task FillDropdowns(int? selectedPassengerId = null, int? selectedRouteId = null, int? selectedScheduleId = null, int? selectedSeatId = null, int? currentReservationId = null)
         {
             var now = DateTime.Now;
 
@@ -1000,6 +973,62 @@ namespace IntercityTransportManagementSystem.Controllers
             ViewData["RouteId"] = new SelectList(routes, "Id", "Routes", selectedRouteId);
             ViewData["ScheduleId"] = new SelectList(busSchedules, "Id", "Schedule", selectedScheduleId);
             ViewData["SeatId"] = new SelectList(busSeats, "Id", "Seat", selectedSeatId);
+        }
+
+        // Метод за избор на дата на връщане
+        [HttpGet]
+        [Authorize]
+        public IActionResult SelectReturnTrip(int outboundReservationId, int passengerId, DateTime? returnDate = null)
+        {
+            var outbound = _context.Reservations
+                .Include(r => r.Schedule)
+                    .ThenInclude(s => s.Route)
+                .FirstOrDefault(r => r.Id == outboundReservationId);
+
+            if (outbound == null)
+            {
+                return NotFound();
+            }
+
+            // Търсене на обратни маршрути
+            var searchSchedules = _context.BusSchedules
+                .Include(s => s.Route)
+                .Include(s => s.Bus)
+                .Where(s =>
+                    s.Route.StartDestination == outbound.Schedule.Route.FinalDestination &&
+                    s.Route.FinalDestination == outbound.Schedule.Route.StartDestination &&
+                    s.TravelDate >= outbound.Schedule.TravelDate);
+
+            if (returnDate.HasValue)
+            {
+                var dateOnly = DateOnly.FromDateTime(returnDate.Value);
+                searchSchedules = searchSchedules.Where(s => s.TravelDate == dateOnly);
+            }
+
+            var returnSchedules = searchSchedules
+                .OrderBy(s => s.TravelDate)
+                .ThenBy(s => s.DepartureTime)
+                .ToList();
+
+            ViewBag.OutboundReservationId = outboundReservationId;
+            ViewBag.PassengerId = passengerId;
+            ViewBag.OutboundDate = outbound.Schedule.TravelDate;
+            ViewBag.SelectedReturnDate = returnDate?.ToString("yyyy-MM-dd");
+
+            return View(returnSchedules);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult SelectReturnTrip(int selectedReturnScheduleId, int outboundReservationId, int passengerId)
+        {
+            return RedirectToAction("SeatMap", new
+            {
+                scheduleId = selectedReturnScheduleId,
+                passengerId = passengerId,
+                ticketType = TicketType.Dvuposochen,
+                outboundReservationId = outboundReservationId
+            });
         }
     }
 }

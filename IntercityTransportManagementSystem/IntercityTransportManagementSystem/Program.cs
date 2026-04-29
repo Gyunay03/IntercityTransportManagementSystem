@@ -17,6 +17,7 @@ namespace IntercityTransportManagementSystem
             builder.Services.AddControllersWithViews();
             builder.Services.AddHostedService<ReservationCleanupService>();
             builder.Services.AddSignalR();
+            builder.Services.AddScoped<IReservationService, ReservationService>();
             builder.Services.AddDbContext<IntercityTransportManagementSystemDatabaseContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

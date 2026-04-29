@@ -14,6 +14,8 @@
 	<input type="hidden" name="scheduleId" id="ScheduleId" value="@Model.ScheduleId" />
 	<input type="hidden" name="passengerId" id="PassengerId" value="@Model.PassengerId" />
 	<input type="hidden" name="seatId" id="SeatId" value="" />
+	<input type="hidden" name="ticketType" value="@Model.TicketType" />
+	<input type="hidden" name="outboundReservationId" value="@Model.OutboundReservationId" />
 
 	<div class="d-flex justify-content-center">
 		@if (TempData["Error"] != null)

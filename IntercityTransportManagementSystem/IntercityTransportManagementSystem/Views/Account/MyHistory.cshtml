@@ -1,0 +1,105 @@
+﻿@using IntercityTransportManagementSystem.ViewModels
+@using IntercityTransportManagementSystem.Enums
+@model MyHistoryViewModel
+
+@{
+	ViewData["Title"] = "Историят на резервации и плащания";
+}
+
+<div class="container mt-4">
+	<div class="card shadow p-4">
+		<h2 class="text-center mb-4"><i class="bi bi-clock-history"></i> Моите резервации и билети</h2>
+
+		<div class="card shadow mb-5">
+			<div class="card-header bg-primary text-white text-center">Предстоящи пътувания</div>
+			<div class="card-body">
+				<table class="table table-bordered text-center table-hover align-middle table-striped">
+					<thead class="table-info align-middle">
+						<tr>
+							<th>Маршрут</th>
+							<th>Дата и час</th>
+							<th>Място</th>
+							<th>Статус</th>
+							<th>Действия</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var res in Model.ActiveOrPastReservations)
+						{
+							var rowClass = res.Status == ReservationStatus.Cancelled ? "table-secondary text-muted" : "";
+							var travelDateTime = res.Schedule.TravelDate.ToDateTime(res.Schedule.DepartureTime);
+							bool canCancel = DateTime.Now < travelDateTime.AddHours(-1);
+
+							<tr class="@rowClass">
+								<td>@res.Schedule.Route.StartDestination - @res.Schedule.Route.FinalDestination</td>
+								<td>@res.Schedule.TravelDate.ToString("dd.MM.yyyy") от @res.Schedule.DepartureTime.ToString("HH:mm") ч.</td>
+								<td>@res.Seat.Number</td>
+								<td>
+									@if (res.Status == ReservationStatus.Cancelled)
+									{
+										<span class="badge bg-danger">Анулирана</span>
+									}
+									else if (res.Status == ReservationStatus.Confirmed)
+									{
+										<span class="badge bg-success">Потвърдена</span>
+									}
+									else if (res.Status == ReservationStatus.Pending)
+									{
+										<span class="badge bg-warning">Чакаща</span>	
+									}
+								</td>
+								<td>
+									@if (res.Status != ReservationStatus.Cancelled)
+									{
+										<a asp-controller="Payments" asp-action="Success" asp-route-reservationId="@res.Id" class="btn btn-sm btn-info">Билет</a>
+									}
+
+									@if (canCancel)
+									{
+										<a asp-controller="Payments" asp-action="CancelPayment" asp-route-id="@res.Id" class="btn btn-sm btn-outline-danger">Анулирай</a>
+									}
+									else
+									{
+										<button class="btn btn-sm btn-secondary" disabled title="Анулирането е възможно до 1 час преди тръгване">Заключено</button>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+
+				<nav>
+					<ul class="pagination justify-content-center">
+						<li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+							<a class="page-link"
+							   asp-action="MyHistory"
+							   asp-route-page="@(Model.CurrentPage - 1)">
+								Назад
+							</a>
+						</li>
+
+						@for (int i = 1; i <= Model.TotalPages; i++)
+						{
+							<li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+								<a class="page-link"
+								   asp-action="MyHistory"
+								   asp-route-page="@i">
+									@i
+								</a>
+							</li>	
+						}
+
+						<li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+							<a class="page-link"
+								asp-action="MyHistory"
+								asp-route-page="@(Model.CurrentPage + 1)">
+								Напред
+							</a>
+						</li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+	</div>
+
+</div>

@@ -1,5 +1,23 @@
 ﻿import { connection } from './reservationHubClient.js';
 
+connection.on("SeatLocked", function (data) {
+	if (data.lockedBy === parseInt(document.getElementById("PassengerId").value)) {
+		return;
+}
+
+const button = document.querySelector(`button[data-seat-id='${data.seatId}']`);
+
+	if (button && button.classList.contains('btn-selected')) {
+		alert("Това място току-що беше избрано от друг потребител.");
+		button.classList.remove('btn-selected');
+		document.getElementById('SeatId').value = "";
+	}
+
+	button.disabled = true;
+	button.classList.remove('btn-available');
+	button.classList.add('btn-locked');
+});
+
 document.addEventListener("DOMContentLoaded", function () {
 	const seatButtons = document.querySelectorAll('button[data-seat-id]');
 	const hiddenInput = document.getElementById('SeatId');

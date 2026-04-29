@@ -77,6 +77,15 @@
                                     Време за пътуване
                                 </a>
                             </th>
+                            
+                            <th>
+                                <a asp-action="Index"
+                                   asp-route-sortOrder="@(Model.SortOrder == "ticketPrice" ? "ticketPrice_descending" : "ticketPrice")"
+                                   asp-route-searchString="@Model.SearchString"
+                                   class="text-decoration-none text-dark fw-semibold">
+                                    Цена на билет
+                                </a>
+                            </th>
 
                             <th class="text-center">Действия</th>
                         </tr>
@@ -89,6 +98,16 @@
                                 <td>@item.FinalDestination</td>
                                 <td>@item.Distance.ToString("F2") км</td>
                                 <td>@item.EstimatedDuration</td>
+                                <td>
+                                    @{
+                                        decimal euroCourse = 1.95583m;
+                                        //decimal priceInEuro = item.TicketPrice / euroCourse;
+                                        decimal priceInLeva = item.TicketPrice * euroCourse;
+                                    }
+                                    <span class="fw-bolder">(@item.TicketPrice.ToString("F2") €)</span>
+                                    /
+                                    <span class="text-black">@priceInLeva.ToString("F2") лв.</span>
+                                </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">
                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>

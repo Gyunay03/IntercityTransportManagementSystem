@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/IntercityTransportManagementSystem.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/seats.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body class="page-background">
     <header>
@@ -66,18 +67,25 @@
                             
                             @if (User.IsInRole("Administrator"))
                             {
-                            <li class="nav-item">
-                                <a asp-controller="Users" asp-action="Index" class="nav-link text-white">Потребители</a>
-                            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Users" asp-action="Index" class="nav-link text-white">Потребители</a>
+                                </li>
                             
-                            <li class="nav-item">
-                                <a asp-controller="Drivers" asp-action="Index" class="nav-link text-white">Шофьори</a>
-                            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Drivers" asp-action="Index" class="nav-link text-white">Шофьори</a>
+                                </li>
 
-                            <li class="nav-item">
-                                <a asp-controller="Passengers" asp-action="Index" class="nav-link text-white">Пътници</a>
-                            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Passengers" asp-action="Index" class="nav-link text-white">Пътници</a>
+                                </li>
                             }
+                            @if (User.IsInRole("Passenger"))
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="Account" asp-action="MyHistory" class="nav-link text-white">Моите резервации и билети</a>
+                                </li>
+                            }
+                            
                         </ul>
                     </div>
                 </div>
