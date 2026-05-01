@@ -1,0 +1,71 @@
+﻿@model IEnumerable<IntercityTransportManagementSystem.Models.BusRequest>
+@using IntercityTransportManagementSystem.Enums
+
+@{
+	ViewData["Title"] = "Заявка за нов курс";
+}
+
+<div class="container mt-4">
+	<h2 class="text-center mb-4">Заявки за нов курс</h2>
+
+	<table class="table table-bordered text-center table-hover align-middle table-striped">
+		<thead class="table-info align-middle">
+			<tr>
+				<th>Маршрут</th>
+				<th>Час на тръгване</th>
+				<th>Час на пристигане</th>
+				<th>Дата на заявка</th>
+				<th>Статус</th>
+				<th>Действия</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			@foreach (var request in Model)
+			{
+				<tr>
+					<td>@request.Schedule.Route.StartDestination - @request.Schedule.Route.FinalDestination</td>
+					<td>@request.Schedule.DepartureTime</td>
+					<td>@request.Schedule.ArrivalTime</td>
+					<td>@request.RequestDate.ToString("dd.MM.yyyy HH:mm")</td>
+					<td>
+						<span class="badge bg-@(request.Status == BusRequestStatus.Pending ? "warning" :
+												request.Status == BusRequestStatus.Approved ? "success" : "danger")">
+							@request.Status
+						</span>
+					</td>
+
+					<td>
+						@if (request.Status == BusRequestStatus.Pending)
+						{
+							<form asp-action="Approve" method="post" class="d-flex gap-2 mb-2">
+								<input type="hidden" name="id" value="@request.Id" />
+
+								<select name="newBusId" class="form-select" required>
+									<option value="">Изберете автобус</option>
+									@foreach (var bus in ViewBag.Buses)
+									{
+										<option value="@bus.Id"	>
+											Автобус @bus.Id (Капацитет: @bus.Capacity)
+										</option>
+									}
+								</select>
+
+								<input type="submit" class="btn btn-success btn-sm" value="Одобри" />
+							</form>
+							
+							<form asp-action="Reject" method="post">
+								<input type="hidden" name="id" value="@request.Id" />
+								<input type="submit" class="btn btn-danger" value="Откажи" />
+							</form>
+						}
+						else
+						{
+							<span class="text-muted">Обработено</span>	
+						}
+					</td>
+				</tr>	
+			}
+		</tbody>
+	</table>
+</div>

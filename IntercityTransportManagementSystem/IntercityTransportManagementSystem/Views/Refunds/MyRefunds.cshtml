@@ -1,0 +1,82 @@
+﻿@model IEnumerable<IntercityTransportManagementSystem.Models.Refund>
+@using IntercityTransportManagementSystem.Enums
+
+@{
+    ViewData["Title"] = "Моите заявки за връщане";
+    decimal euroCourse = 1.95583m;
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history"></i> История на анулиранията</h2>
+        <a asp-controller="Payments" asp-action="Index" class="btn btn-outline-secondary">Към моите билети</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-light text-center border p-5">
+            <i class="bi bi-info-circle fs-1 d-block mb-3 text-muted"></i>
+            <p class="lead">Все още нямате заявени възстановявания на суми.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card shadow-sm border-@GetStatusColor(item.Status)">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title">Резервация #@item.Payment.ReservationId</h5>
+                                <span class="badge bg-@GetStatusColor(item.Status)">
+                                    @TranslateStatus(item.Status)
+                                </span>
+                            </div>
+                            <p class="card-text mb-1">
+                                <small class="text-muted">Заявено на: @item.RequestDate.ToString("dd.MM.yyyy HH:mm")</small>
+                            </p>
+                            <hr />
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <small class="d-block text-muted">Сума за връщане</small>
+                                    <span class="fw-bold">@item.Amount.ToString("F2") €</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="d-block text-muted">В лева (приблизително)</small>
+                                    <span class="fw-bold">@((item.Amount * euroCourse).ToString("F2")) лв.</span>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(item.AdminNotes))
+                            {
+                                <div class="mt-3 p-2 bg-light rounded border-start border-4 border-info">
+                                    <small class="fw-bold d-block">Бележка от администратор:</small>
+                                    <small class="fst-italic">@item.AdminNotes</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusColor(RefundStatus status) => status switch
+    {
+        RefundStatus.Pending => "warning",
+        RefundStatus.Completed => "success",
+        RefundStatus.Rejected => "danger",
+        _ => "secondary"
+    };
+
+    string TranslateStatus(RefundStatus status) => status switch
+    {
+        RefundStatus.Pending => "В процес на обработка",
+        RefundStatus.Completed => "Върнати пари",
+        RefundStatus.Rejected => "Отказано",
+        _ => "Неизвестен"
+    };
+}

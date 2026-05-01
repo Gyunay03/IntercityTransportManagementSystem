@@ -1,0 +1,51 @@
+﻿@using IntercityTransportManagementSystem.Enums;
+@model IntercityTransportManagementSystem.Models.Refund
+
+@{
+    decimal euroCourse = 1.95583m;
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4>Детайли за възстановяване #@Model.Id</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Информация за плащането</h5>
+                    <p><strong>Клиент:</strong> @Model.Payment.Reservation.Passenger.Name @Model.Payment.Reservation.Passenger.LastName</p>
+                    <p><strong>Сума:</strong> @Model.Amount.ToString("F2") € (@((Model.Amount * euroCourse).ToString("F2")) лв.)</p>
+                    <p><strong>Дата на заявка:</strong> @Model.RequestDate</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    @if (Model.Status == RefundStatus.Pending)
+                    {
+                        <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-lg">Одобри връщането</button>
+                        </form>
+
+                        <hr />
+                        <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                            <div class="mb-3 text-start">
+                                <label>Причина за отказ:</label>
+                                <textarea name="reason" class="form-control" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger">Откажи възстановяването</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            Статус: @Model.Status <br />
+                            Обработено на: @Model.ProcessedDate
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a asp-action="Index" class="btn btn-secondary">Назад към списъка</a>
+        </div>
+    </div>
+</div>

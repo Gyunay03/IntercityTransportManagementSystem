@@ -429,19 +429,13 @@ namespace IntercityTransportManagementSystem.Controllers
                 {
                     return Forbid();
                 }
-                // ??
-                var reservation = await _context.Reservations.FindAsync(id);
-                if (reservation.PassengerId != currentUserId)
-                {
-                    return Forbid();
-                }
             }
 
             var travelDateTime = payment.Reservation.Schedule.TravelDate.ToDateTime(payment.Reservation.Schedule.DepartureTime);
 
-            if (DateTime.Now > travelDateTime.AddHours(-1))
+            if (DateTime.Now > travelDateTime.AddDays(-1))
             {
-                TempData["Error"] = "Не може да анулирате плащане по-малко от 1 час преди тръгване или за минало пътуване.";
+                TempData["Error"] = "Анулирането е възможно най-късно 24 часа преди тръгване.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -453,13 +447,24 @@ namespace IntercityTransportManagementSystem.Controllers
                 payment.Reservation.IsActive = false; 
             }
 
+            // Създаване на запис за връщане на пари
+            var refund = new Refund
+            {
+                PaymentId = payment.Id,
+                Amount = payment.Sum,
+                RequestDate = DateTime.Now,
+                Status = RefundStatus.Pending,
+                AdminNotes = "Автоматично генерирана заявка при анулиране от потребител."
+            };
+
+            _context.Refunds.Add(refund);
             _context.Update(payment);
             await _context.SaveChangesAsync();
             
             await _hub.Clients.All.SendAsync("UpdateSeatStatus",
                     payment.Reservation.ScheduleId, payment.Reservation.SeatId, "Available");
 
-            TempData["Success"] = "Плащането беше анулирано успешно и мястото е освободено.";
+            TempData["Success"] = "Билетът е анулиран. Заявката ви за възстановяване на сумата е приета за обработка.";
             return RedirectToAction(nameof(Index));
         }
 

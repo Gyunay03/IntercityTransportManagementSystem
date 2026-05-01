@@ -18,6 +18,8 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
 
     public virtual DbSet<Bus> Buses { get; set; }
 
+    public virtual DbSet<BusRequest> BusRequests { get; set; }
+
     public virtual DbSet<BusSchedule> BusSchedules { get; set; }
 
     public virtual DbSet<BusSeat> BusSeats { get; set; }
@@ -29,6 +31,8 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
     public virtual DbSet<Passenger> Passengers { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
+
+    public virtual DbSet<Refund> Refunds { get; set; }
 
     public virtual DbSet<Reservation> Reservations { get; set; }
 
@@ -83,6 +87,11 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
             entity.HasIndex(s => new { s.BusId, s.Number })
                   .IsUnique();
         });
+
+        modelBuilder.Entity<BusRequest>()
+            .HasIndex(r => new { r.ScheduleId, r.Status })
+            .IsUnique()
+            .HasFilter("[Status] = 0");
 
         modelBuilder.Entity<Driver>(entity =>
         {
@@ -151,12 +160,17 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<Refund>()
+            .Property(r => r.Amount)
+            .HasColumnType("decimal(18,2)");
+
         modelBuilder.Entity<Route>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Routes__3214EC07D15BC429");
 
             entity.Property(e => e.FinalDestination).HasMaxLength(100);
             entity.Property(e => e.StartDestination).HasMaxLength(100);
+            entity.Property(e => e.TicketPrice).HasColumnType("decimal(18,2)");
         });
 
         modelBuilder.Entity<User>(entity =>
