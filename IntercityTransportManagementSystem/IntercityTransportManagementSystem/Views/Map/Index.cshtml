@@ -1,0 +1,233 @@
+﻿@{
+	ViewData["Title"] = "Карта на маршрута";
+}
+
+<div class="row mb-3">
+	<div class="col-md-4">
+		<label for="lineSelect">Изберете маршрут</label>
+		<select id="lineSelect" class="form-select">
+			<option value="">Изберете линия</option>
+		</select>
+	</div>
+</div>
+
+<div class="map-wrapper">
+	<div id="map" style="height: 600px; width: 100%;"></div>
+
+	<div class="map-legend">
+		<div class="legend-items">
+			<div class="legend-item">
+				<img src="~/images/realTimeBusIcon.png" alt="Реално време" />
+				<span>Реални данни</span>
+			</div>
+			<div class="legend-item">
+				<img src="~/images/simulatedBusIcon.png" alt="Симулация" />
+				<span>Симулация</span>
+			</div>
+		</div>
+		
+		<div class="legend-attribution">
+			<span class="text-muted">flaticon.com</span>
+		</div>
+	</div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="~/lib/signalr.js"></script>
+
+<script>
+	// Инициализиране на картата
+	var map = L.map('map').setView([42.7, 25.5], 7);
+
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; OpenStreetMap contributers'
+	}).addTo(map);
+
+	var currentTripId = null;
+	var busMarker = null;
+	var routeLayer = L.layerGroup().addTo(map);
+
+	// Икони за автобус (различни цветове за реално време и симулация)
+	var realTimeBusIcon = L.icon({
+					iconUrl: '/images/realTimeBusIcon.png',
+					iconSize: [35, 35],
+					iconAnchor: [17, 17]
+	});
+	
+	var simulatedBusIcon = L.icon({
+					iconUrl: '/images/simulatedBusIcon.png',
+					iconSize: [35, 35],
+					iconAnchor: [17, 17]
+	});
+
+	function updateMarkerPosition(tripId, lat, lng, isRealTime, speed) {
+		// Превръщаме всичко в чисти типове за сигурност
+		const tId = Number(tripId);
+		const selId = Number(currentTripId);
+		const isRT = Boolean(isRealTime);
+
+		if(tId !== selId) return;
+
+		const displaySpeed = speed ? Math.round(speed) : 0;
+		const statusText = isRT ? "Реално време" : "Симулация";
+		const icon = isRT ? realTimeBusIcon : simulatedBusIcon;
+
+		const popupContent = `
+					<b>Превозно средство</b><br>
+					<b>Тип данни:</b> ${statusText}<br>
+					<b>Статус:</b> ${displaySpeed > 0 ? 'В движение' : 'Спрял на спирка'}<br>
+					<b>Текуща скорост:</b> ${displaySpeed} км/ч
+					`;
+
+		if(busMarker === null) {
+			console.log("Създаване на нов маркер за Trip", tId);
+			busMarker = L.marker([lat, lng], {icon: icon, zIndexOffset: 1000 })
+				.addTo(map)
+				.bindPopup(popupContent);
+
+			busMarker.isRealTimeStatus = isRT;
+		} else {
+				// Обновяваме позицията и текста
+				busMarker.setLatLng([lat, lng]);
+				busMarker.setPopupContent(popupContent);
+
+				// Проверяваме дали статусът НАИСТИНА се е променил
+				if(busMarker.isRealTimeStatus !== isRT) {
+					console.log(`Смяна на иконата за Trip ${tId}: от ${busMarker.isRealTimeStatus} на ${isRT}`);
+					busMarker.setIcon(isRealTime ? realTimeBusIcon : simulatedBusIcon);
+					busMarker.isRealTimeStatus = isRT;
+				}
+		}
+	}
+
+	// Зареждане на линиите в падащото меню
+	fetch('/api/lines')
+		.then(res => res.json())
+		.then(lines => {
+			const select =document.getElementById('lineSelect');
+			lines.forEach(line => {
+				let opt = document.createElement('option');
+				opt.value = line.defaultTripId;
+				opt.innerHTML = line.name;
+				select.appendChild(opt);
+			});
+		})
+		.catch(err => console.error("Грешка при зареждане на линиите: ", err));
+
+	// Функция за зареждане на конкретен маршрут
+	function loadRoute(tripId) {
+		if(!tripId || tripId === currentTripId) return;
+		currentTripId = tripId;
+		
+		// Изчистване на картата от стария маршрут
+		routeLayer.clearLayers();
+		
+		if(busMarker) {
+			map.removeLayer(busMarker);
+			busMarker = null;
+		}
+
+		// Извикване на API
+		fetch(`/api/trips/${tripId}/full-path`)
+			.then(res => {
+				if(!res.ok) throw new Error("Липсва маршрут");
+				return res.json();
+			})
+			.then(data => {
+			// Преобразуване на данните в масив от [lat, lng] за Leaflet
+			var latlngs = data.map(point => [point.lat, point.lng]);
+
+				if(latlngs.length > 0) {
+				// Чертаене на синята линия директно от точките в базата данни
+				var polyline = L.polyline(latlngs, {color: 'blue', weight: 4}).addTo(routeLayer);
+				map.fitBounds(polyline.getBounds());
+				console.log("Маршрутът е зареден успешно от таблица Shapes.");
+
+				return fetch(`/api/trips/${tripId}/live-position`);
+				}	
+			})
+			.then(res => {
+					if(res && res.ok) return res.json();
+					return null;
+			})
+			.then(busData => {
+				if(busData) {
+					console.log("Първоначално разполагане на автобуса от базата данни:", busData);
+					updateMarkerPosition(busData.tripId, busData.latitude, busData.longitude, busData.isRealTime, busData.speed);
+				}
+			})
+			.catch(error => {
+				console.warn(error.message);
+				// Ако няма генериран маршрут, може да се извика автоматично генериране:
+				fetch(`/api/trips/${tripId}/generate-shape`, { method: 'POST' })
+					//.then(() => loadRoute(tripId));
+			});
+	}
+
+	document.getElementById('lineSelect').addEventListener('change', function(e) {
+		loadRoute(e.target.value);
+	});
+
+	const connection = new signalR.HubConnectionBuilder()
+		.withUrl("/busHub")
+		.withAutomaticReconnect()
+		.build();
+
+	connection.on("UpdateBusPosition", function (tripId, lat, lng, isRealTime, speed) {
+		console.log("Получено обновяване през SignalR:", { tripId, lat, lng, isRealTime, speed });
+		updateMarkerPosition(tripId, lat, lng, isRealTime, speed);
+	});
+
+	connection.start().then(function () {
+		console.log("Успешно свързване със SignalR.");
+	}).catch(function (err) {
+		return console.error(err.toString());
+	});
+</script>
+
+<style>
+	.map-wrapper {
+		position: relative;
+	}
+
+	.map-legend {
+		position: absolute;
+		left: 12px;
+		bottom: 12px;
+		z-index: 1000;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		align-items: center;
+		background: #ffffff;
+		border: 1px solid #dcdcdc;
+		border-radius: 6px;
+		padding: 8px 12px;
+		font-size: 14px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
+
+	.legend-items {
+		display: flex;
+		align-items: center;
+		gap: 18px;
+	}
+	
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		white-space: nowrap;
+	}
+
+	.legend-item img {
+		width: 24px;
+		height: 24px;
+	}
+
+	.legend-attribution {
+		margin-top: 4px;
+		text-align: center;
+	}
+</style>

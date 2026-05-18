@@ -28,8 +28,6 @@ namespace IntercityTransportManagementSystem
             builder.Services.AddScoped<SeatLocksCleanup>();
             builder.Services.AddScoped<BusRequestJob>();
             builder.Services.AddScoped<IReservationService, ReservationService>();
-            builder.Services.AddDbContext<IntercityTransportManagementSystemDatabaseContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -38,27 +36,43 @@ namespace IntercityTransportManagementSystem
                     options.AccessDeniedPath = "/Account/AccessDenied";
                 });
 
+            builder.Services.AddDbContext<IntercityTransportManagementSystemDatabaseContext>(options =>
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    x => x.UseNetTopologySuite()
+                ));
+            builder.Services.AddScoped<ITripService, TripService>();
+
+            //builder.Services.AddHostedService<BusSimulationJob>();
+            builder.Services.AddScoped<ILineService, LineService>();
+            builder.Services.AddHttpClient();
+            //builder.Services.AddSingleton<IVehicleProvider, FinlandJsonProvider>();
+            builder.Services.AddScoped<IVehicleProvider, SimulationProvider>();
+            builder.Services.AddScoped<IVehicleProvider, EnturIntercityProvider>();
+            
+            builder.Services.AddHostedService<UnifiedBusTrackingJob>();
+
+            /*
+            builder.Services.AddSingleton<IVehicleProvider>(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<GtfsRealTimeProvider>>();
+                return new GtfsRealTimeProvider(
+                    sp.GetRequiredService<IHttpClientFactory>(),
+                    "https://cdn.mbta.com/realtime/VehiclePositions.pb",
+                    "USA-Boston",
+                    1,
+                    logger);
+            });
+            */    
+
             var app = builder.Build();
             var env = builder.Environment;
 
             using (var scope = app.Services.CreateScope())
             {
+                var services = scope.ServiceProvider;
                 var context = scope.ServiceProvider.GetRequiredService<IntercityTransportManagementSystemDatabaseContext>();
-                DbInitializer.SeedAdmin(context);
-            }
-
-            // test1
-            var cs = builder.Configuration.GetConnectionString("DefaultConnection");
-            Console.WriteLine(cs);
-
-            // test 2
-            var test = builder.Configuration["ConnectionStrings:DefaultConnection"];
-            Console.WriteLine("TEST CS = " + test);
-
-            //Diagnostic test 3
-            foreach (var c in builder.Configuration.AsEnumerable())
-            {
-                Console.WriteLine($"{c.Key} = {c.Value}");
+                DbInitializer.Seed(context);
             }
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -98,6 +112,7 @@ namespace IntercityTransportManagementSystem
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.MapHub<ReservationHub>("/reservationHub");
+            app.MapHub<BusHub>("/busHub");
 
             // Добавяне на Dashboard (UI)
             app.UseHangfireDashboard("/hangfire", new DashboardOptions

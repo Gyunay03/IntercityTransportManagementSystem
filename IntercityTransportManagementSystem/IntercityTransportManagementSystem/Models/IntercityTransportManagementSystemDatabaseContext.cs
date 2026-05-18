@@ -38,11 +38,32 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
 
     public virtual DbSet<Route> Routes { get; set; }
 
+    public virtual DbSet<LiveBusPosition> LiveBusPositions { get; set; }
+
+    public virtual DbSet<Shape> Shapes { get; set; }
+
+    public virtual DbSet<Stop> Stops { get; set; }
+
+    public virtual DbSet<StopTime> StopTimes { get; set; }
+
+    public virtual DbSet<TransportLine> TransportLines { get; set; }
+
+    public virtual DbSet<Trip> Trips { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
+    /*
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=IntercityTransportManagementSystem_Database;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+    { 
+        #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=IntercityTransportManagementSystem_Database;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False",
+                x => x.UseNetTopologySuite());
+        }
+    }
+    */
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -186,6 +207,26 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
             entity.Property(e => e.Password).HasMaxLength(200);
             entity.Property(e => e.Role).HasMaxLength(15);
         });
+
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Shape>()
+            .HasKey(s => new { s.ShapeId, s.Sequence });
+
+        modelBuilder.Entity<StopTime>()
+            .HasKey(st => new { st.TripId, st.StopSequence });
+
+        modelBuilder.Entity<Stop>()
+            .Property(b => b.Location)
+            .HasColumnType("geography");
+
+        modelBuilder.Entity<Shape>()
+            .Property(b => b.Location)
+            .HasColumnType("geography");
+
+        modelBuilder.Entity<LiveBusPosition>()
+            .Property(b => b.CurrentLocation)
+            .HasColumnType("geography");
 
         OnModelCreatingPartial(modelBuilder);
     }

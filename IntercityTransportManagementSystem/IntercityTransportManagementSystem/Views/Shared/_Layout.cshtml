@@ -38,57 +38,83 @@
                             @if (User.IsInRole("Administrator"))
                             {
                                 <li class="nav-item">
-                                    <a asp-controller="Buses" asp-action="Index" class="nav-link text-white">Автобуси</a>
+                                    <a asp-controller="Buses" asp-action="Index" class="nav-link text-white">
+                                        <img src="/images/bus.png" alt="" class="sidebar-icon" />  Автобуси
+                                    </a>
                                 </li>    
                             }
                             
                             <li class="nav-item">
-                                <a asp-controller="BusSchedules" asp-action="Index" class="nav-link text-white">Разписание на автобуси</a>
+                                <a asp-controller="BusSchedules" asp-action="Index" class="nav-link text-white">
+                                   <img src="/images/time-management.png" alt="" class="sidebar-icon" />  Разписание на автобуси
+                                </a>
                             </li>
                             
                             <li class="nav-item">
-                                <a asp-controller="Routes" asp-action="Index" class="nav-link text-white">Маршрути</a>
+                                <a asp-controller="Routes" asp-action="Index" class="nav-link text-white">
+                                   <img src="/images/route.png" alt="" class="sidebar-icon" />  Маршрути
+                                </a>
                             </li>
                             
                             @if (User.IsInRole("Administrator"))
                             {
                                 <li class="nav-item">
-                                    <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">Места в автобус</a>
+                                    <a asp-controller="BusSeats" asp-action="Index" class="nav-link text-white">
+                                      <img src="/images/seats.png" alt="" class="sidebar-icon" />  Места в автобус
+                                    </a>
                                 </li>
                             }
                             
                             <li class="nav-item">
-                                <a asp-controller="Reservations" asp-action="Index" class="nav-link text-white">Резервиране на място</a>
+                                <a asp-controller="Reservations" asp-action="Index" class="nav-link text-white">
+                                    <img src="/images/reservation.png" alt="" class="sidebar-icon" />  Резервиране на място
+                                </a>
                             </li>
                             
                             <li class="nav-item">
-                                <a asp-controller="Payments" asp-action="Index" class="nav-link text-white">Купуване на билет</a>
+                                <a asp-controller="Payments" asp-action="Index" class="nav-link text-white">
+                                    <img src="/images/ticket.png" alt="" class="sidebar-icon" />  Купуване на билет
+                                </a>
                             </li>
                             
                             @if (User.IsInRole("Administrator"))
                             {
                                 <li class="nav-item">
-                                    <a asp-controller="Users" asp-action="Index" class="nav-link text-white">Потребители</a>
+                                    <a asp-controller="Users" asp-action="Index" class="nav-link text-white">
+                                        <img src="/images/users.png" alt="" class="sidebar-icon" />  Потребители
+                                    </a>
                                 </li>
                             
                                 <li class="nav-item">
-                                    <a asp-controller="Drivers" asp-action="Index" class="nav-link text-white">Шофьори</a>
+                                    <a asp-controller="Drivers" asp-action="Index" class="nav-link text-white">
+                                        <img src="/images/driver.png" alt="" class="sidebar-icon" />  Шофьори
+                                    </a>
                                 </li>
 
                                 <li class="nav-item">
-                                    <a asp-controller="Passengers" asp-action="Index" class="nav-link text-white">Пътници</a>
+                                    <a asp-controller="Passengers" asp-action="Index" class="nav-link text-white">
+                                        <img src="/images/passenger.png" alt="" class="sidebar-icon" />  Пътници
+                                    </a>
                                 </li>
                             }
                             @if (User.IsInRole("Passenger"))
                             {
                                 <li class="nav-item">
-                                    <a asp-controller="Account" asp-action="MyHistory" class="nav-link text-white">Моите резервации и билети</a>
+                                    <a asp-controller="Account" asp-action="MyHistory" class="nav-link text-white">
+                                        <img src="/images/my_tickets.png" alt="" class="sidebar-icon" />  Моите резервации и билети
+                                    </a>
                                 </li>
                             }
                             
                             <li class="nav-item">
                                 <a asp-controller="Refunds" asp-action="MyRefunds" class="nav-link text-white">
-                                    <i class="bi bi-arrow-return-left"></i> Върнати суми
+                                    <img src="/images/return_money.png" alt="" class="sidebar-icon" />  Върнати суми
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a asp-controller="Map" asp-action="Index" class="nav-link text-white">
+                                    <img src="/images/live-tracking.png" alt="" class="sidebar-icon" />  Проследяване на маршрути
                                 </a>
                             </li>
                         </ul>
@@ -124,3 +150,12 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+<style>
+    .sidebar-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+        vertical-align: text-bottom;
+    }
+</style>
