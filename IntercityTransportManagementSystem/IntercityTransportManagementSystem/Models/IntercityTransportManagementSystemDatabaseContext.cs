@@ -52,6 +52,8 @@ public partial class IntercityTransportManagementSystemDatabaseContext : DbConte
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Notification> Notifications { get; set; }
+
     /*
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     { 

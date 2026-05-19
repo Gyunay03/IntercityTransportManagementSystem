@@ -8,16 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Models;
 using Microsoft.AspNetCore.Authorization;
 using IntercityTransportManagementSystem.ViewModels;
+using IntercityTransportManagementSystem.Services;
+using IntercityTransportManagementSystem.Enums;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
     public class BusSchedulesController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
+        private readonly INotificationService _notificationService;
 
-        public BusSchedulesController(IntercityTransportManagementSystemDatabaseContext context)
+        public BusSchedulesController(IntercityTransportManagementSystemDatabaseContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         // GET: BusSchedules
@@ -296,6 +300,10 @@ namespace IntercityTransportManagementSystem.Controllers
                         return NotFound();
                     }
 
+                    var oldTravelDate = existingBusSchedule.TravelDate;
+                    var oldDepartureTime = existingBusSchedule.DepartureTime;
+                    var oldArrivalTime = existingBusSchedule.ArrivalTime;
+
                     existingBusSchedule.RouteId = busSchedule.RouteId;
                     existingBusSchedule.BusId = busSchedule.BusId;
                     existingBusSchedule.DriverId = busSchedule.DriverId;
@@ -304,6 +312,31 @@ namespace IntercityTransportManagementSystem.Controllers
                     existingBusSchedule.ArrivalTime = busSchedule.ArrivalTime;
                     
                     await _context.SaveChangesAsync();
+
+                    if (oldTravelDate != existingBusSchedule.TravelDate ||
+                        oldDepartureTime != existingBusSchedule.DepartureTime ||
+                        oldArrivalTime != existingBusSchedule.ArrivalTime)
+                    {
+                        var userIds = await _context.Reservations
+                            .Where(r => r.ScheduleId == existingBusSchedule.Id &&
+                                        r.IsActive &&
+                                        r.Passenger.UserId.HasValue)
+                            .Select(r => r.Passenger.UserId.Value)
+                            .Distinct()
+                            .ToListAsync();
+
+                        var scheduleWithRoute = await _context.BusSchedules
+                            .Include(s => s.Route)
+                            .FirstOrDefaultAsync(s => s.Id == existingBusSchedule.Id);
+
+                        foreach (var userId in userIds)
+                        {
+                            await _notificationService.CreateNotificationAsync(userId, "Промяна в разписание",
+                                $"Има промяна в разписанието за {scheduleWithRoute.Route.StartDestination} - {scheduleWithRoute.Route.FinalDestination}. " +
+                                $"Нов час за тръгване: {scheduleWithRoute.TravelDate:dd.MM.yyyy} {scheduleWithRoute.DepartureTime:HH:mm} часа.",
+                                NotificationType.ScheduleChanged);
+                        }
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {

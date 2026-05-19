@@ -19,15 +19,16 @@ namespace IntercityTransportManagementSystem.Controllers
     public class ReservationsController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
-
         private readonly IHubContext<ReservationHub> _hub;
-
         private readonly IReservationService _reservationService;
-        public ReservationsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub, IReservationService reservationService)
+        private readonly INotificationService _notificationService;
+
+        public ReservationsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub, IReservationService reservationService, INotificationService notificationService)
         {
             _context = context;
             _hub = hub;
             _reservationService = reservationService;
+            _notificationService = notificationService;
         }
 
         // GET: Reservations

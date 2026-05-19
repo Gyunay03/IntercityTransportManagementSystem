@@ -12,11 +12,13 @@ namespace IntercityTransportManagementSystem.Services
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
         private readonly IHubContext<ReservationHub> _hub;
+        private readonly INotificationService _notificationService;
 
-        public ReservationService(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub)
+        public ReservationService(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub, INotificationService notificationService)
         {
             _context = context;
             _hub = hub;
+            _notificationService = notificationService;
         }
 
         public async Task<ReservationResult> ConfirmSeatAsync(int scheduleId, int seatId, int passengerId, TicketType ticketType, int? outboundReservationId = null)
@@ -67,6 +69,22 @@ namespace IntercityTransportManagementSystem.Services
                 }
 
                 await transaction.CommitAsync();
+
+                var reservationInfo = await _context.Reservations
+                    .Include(r => r.Passenger)
+                    .Include(r => r.Seat)
+                    .Include(r => r.Schedule)
+                        .ThenInclude(s => s.Route)
+                    .FirstOrDefaultAsync(r => r.Id == newReservation.Id);
+
+                if (reservationInfo?.Passenger.UserId != null)
+                {
+                    await _notificationService.CreateNotificationAsync(reservationInfo.Passenger.UserId.Value, "Успешна резервация",
+                        $"Място {reservationInfo.Seat.Number} е резервирано за пътуване " +
+                        $"{reservationInfo.Schedule.Route.StartDestination} - {reservationInfo.Schedule.Route.FinalDestination} " +
+                        $"на {reservationInfo.Schedule.TravelDate:dd.MM.yyyy} в {reservationInfo.Schedule.DepartureTime:HH:mm} часа.",
+                        NotificationType.ReservationCreated);
+                }
 
                 await _hub.Clients.All.SendAsync("SeatReserved", new { scheduleId, seatId });
 

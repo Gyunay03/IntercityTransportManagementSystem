@@ -4,15 +4,18 @@ using IntercityTransportManagementSystem.Models;
 using IntercityTransportManagementSystem.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using IntercityTransportManagementSystem.Services;
 namespace IntercityTransportManagementSystem.Controllers
 {
     public class RefundsController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
+        private readonly INotificationService _notificationService;
 
-        public RefundsController(IntercityTransportManagementSystemDatabaseContext context)
+        public RefundsController(IntercityTransportManagementSystemDatabaseContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -63,6 +66,7 @@ namespace IntercityTransportManagementSystem.Controllers
         {
             var refund = await _context.Refunds
                 .Include(r => r.Payment)
+                    .ThenInclude(p => p.Passenger)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (refund == null)
@@ -76,6 +80,15 @@ namespace IntercityTransportManagementSystem.Controllers
             refund.Payment.PaymentStatus = PaymentStatus.Refunded;
 
             await _context.SaveChangesAsync();
+
+            if (refund.Payment.Passenger.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(refund.Payment.Passenger.UserId.Value,
+                    "Възстановяване на сума",
+                    $"Заявката Ви за възстановяване на {refund.Amount:F2} лв. беше одобрена.",
+                    NotificationType.SystemMessage);                
+            }
+
             TempData["Success"] = "Плащането е маркирано като възстановено.";
             
             return RedirectToAction(nameof(Index));
@@ -87,7 +100,11 @@ namespace IntercityTransportManagementSystem.Controllers
         [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Reject(int id, string reason)
         {
-            var refund = await _context.Refunds.FindAsync(id);
+            var refund = await _context.Refunds
+                .Include(r => r.Payment)
+                    .ThenInclude(p => p.Passenger)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
             if (refund == null)
             {
                 return NotFound();
@@ -98,6 +115,15 @@ namespace IntercityTransportManagementSystem.Controllers
             refund.AdminNotes = "Отказ: " + reason;
 
             await _context.SaveChangesAsync();
+
+            if (refund.Payment.Passenger.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(refund.Payment.Passenger.UserId.Value,
+                    "Отказано възстановяване",
+                    $"Заявката Ви за възстановяне беше отказана. Причина: {reason}",
+                    NotificationType.SystemMessage);
+            }
+
             TempData["Info"] = "Заявката за възстановяване беше отказана.";
 
             return RedirectToAction(nameof(Index));

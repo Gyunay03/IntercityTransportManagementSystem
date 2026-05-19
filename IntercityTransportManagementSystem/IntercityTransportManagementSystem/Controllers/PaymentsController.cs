@@ -12,6 +12,7 @@ using IntercityTransportManagementSystem.Hubs;
 using IntercityTransportManagementSystem.ViewModels;
 using QRCoder;
 using System.Security.Claims;
+using IntercityTransportManagementSystem.Services;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
@@ -19,11 +20,13 @@ namespace IntercityTransportManagementSystem.Controllers
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
         private readonly IHubContext<ReservationHub> _hub;
+        private readonly INotificationService _notificationService;
 
-        public PaymentsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub)
+        public PaymentsController(IntercityTransportManagementSystemDatabaseContext context, IHubContext<ReservationHub> hub, INotificationService notificationService)
         {
             _context = context;
             _hub = hub;
+            _notificationService = notificationService;
         }
 
         // Метод за преглед и избор на плащане 
@@ -116,6 +119,14 @@ namespace IntercityTransportManagementSystem.Controllers
             reservation.IsActive = true;
 
             await _context.SaveChangesAsync();
+
+            if (reservation.Passenger.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(reservation.Passenger.UserId.Value, "Успешно купен билет",
+                    $"Вашият билет за {reservation.Schedule.Route.StartDestination} - {reservation.Schedule.Route.FinalDestination} " +
+                    $"на {reservation.Schedule.TravelDate:dd.MM.yyyy} в {reservation.Schedule.DepartureTime:HH:mm} е успешно купен.",
+                    NotificationType.TicketPurchased);
+            }
 
             await _hub.Clients.All.SendAsync("SeatReserved", new
             {
@@ -460,6 +471,16 @@ namespace IntercityTransportManagementSystem.Controllers
             _context.Refunds.Add(refund);
             _context.Update(payment);
             await _context.SaveChangesAsync();
+
+            var refundPassenger = await _context.Passengers
+                .FirstOrDefaultAsync(p => p.Id == payment.PassengerId);
+
+            if (refundPassenger?.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(refundPassenger.UserId.Value, "Заявка за възстановяване на сумата",
+                    "Билетът е анулиран и е създадена заявка за възстановяване на сумата.",
+                    NotificationType.SystemMessage);
+            }
             
             await _hub.Clients.All.SendAsync("UpdateSeatStatus",
                     payment.Reservation.ScheduleId, payment.Reservation.SeatId, "Available");

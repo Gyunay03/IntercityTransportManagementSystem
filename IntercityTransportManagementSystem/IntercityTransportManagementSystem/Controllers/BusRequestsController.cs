@@ -3,16 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using IntercityTransportManagementSystem.Enums;
 using Microsoft.AspNetCore.Authorization;
+using IntercityTransportManagementSystem.Services;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
     public class BusRequestsController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
-
-        public BusRequestsController(IntercityTransportManagementSystemDatabaseContext context)
+        private readonly INotificationService _notificationService;
+        public BusRequestsController(IntercityTransportManagementSystemDatabaseContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()

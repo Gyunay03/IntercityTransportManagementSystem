@@ -28,6 +28,7 @@ namespace IntercityTransportManagementSystem
             builder.Services.AddScoped<SeatLocksCleanup>();
             builder.Services.AddScoped<BusRequestJob>();
             builder.Services.AddScoped<IReservationService, ReservationService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
