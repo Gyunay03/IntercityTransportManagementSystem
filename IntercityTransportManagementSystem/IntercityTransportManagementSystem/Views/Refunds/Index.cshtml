@@ -6,8 +6,14 @@
     decimal euroCourse = 1.95583m;
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4"><i class="bi bi-cash-stack"></i> Заявки за възстановяване на суми</h2>
+<div class="refund-container">
+   <div class="refund-header">
+       <h2>
+            <i class="bi bi-cash-stack"></i>  
+            Заявки за възстановяване на суми
+       </h2>
+        
+   </div>
 
     @if (TempData["Success"] != null)
     {
@@ -63,52 +69,52 @@
                                 }
                             </td>
                             <td>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex flex-column gap-2 align-items-center">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">
-                                        <i class="bi bi-eye"></i> Детайли
+                                        <i class="bi bi-eye"></i>  Детайли
                                     </a>
-                                </div>
 
-                                @if (item.Status == RefundStatus.Pending)
-                                {
-                                    <div class="d-flex gap-2">
+                                    @if (item.Status == RefundStatus.Pending)
+                                    {
                                         <form asp-action="Approve" asp-route-id="@item.Id" method="post">
+                                            @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-success">
-                                                <i class="bi bi-check-circle"></i> Одобри
+                                                <i class="bi bi-check-circle"></i>  Одобри
                                             </button>
                                         </form>
 
                                         <button type="button" class="btn btn-sm btn-outline-danger"
                                                 data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
-                                            <i class="bi bi-x-circle"></i> Откажи
+                                            <i class="bi bi-x-circle"></i>  Откажи
                                         </button>
-                                    </div>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">@item.ProcessedDate?.ToString("dd.MM.yyyy")</small>
+                                    }
+                                </div>
 
-                                    <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <form asp-action="Reject" asp-route-id="@item.Id" method="post">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Отказ на възстановяване</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <label>Причина за отказа:</label>
-                                                        <textarea name="reason" class="form-control" required></textarea>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Затвори</button>
-                                                        <button type="submit" class="btn btn-danger">Потвърди отказа</button>
-                                                    </div>
-                                                </form>
-                                            </div>
+                                <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form asp-action="Reject" asp-route-id="@item.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Отказ на възстановяване</h5>
+                                                    <input type="button" class="btn-close" data-bs-dismiss="modal" />
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label>Причина за отказа:</label>
+                                                    <textarea name="reason" class="form-control" required></textarea>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <input type="button" class="btn btn-secondary" data-bs-dismiss="modal" value="Затвори" />
+                                                    <input type="submit" class="btn btn-danger" value="Потвърди отказа" />
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
-                                }
-                                else
-                                {
-                                    <small class="text-muted">@item.ProcessedDate?.ToString("dd.MM.yyyy")</small>
-                                }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -117,3 +123,29 @@
         </div>
     </div>
 </div>
+
+<style>
+    .refund-container {
+        max-width: 1060px;
+        margin: 20px auto;
+    }
+
+    .refund-header {
+        background-color: rgba(255, 255, 255, 0.88);
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .refund-header h2 {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #1f2937;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+</style>

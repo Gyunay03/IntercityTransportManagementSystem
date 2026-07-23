@@ -13,9 +13,11 @@ using IntercityTransportManagementSystem.ViewModels;
 using QRCoder;
 using System.Security.Claims;
 using IntercityTransportManagementSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace IntercityTransportManagementSystem.Controllers
 {
+    [Authorize]
     public class PaymentsController : Controller
     {
         private readonly IntercityTransportManagementSystemDatabaseContext _context;
@@ -43,6 +45,15 @@ namespace IntercityTransportManagementSystem.Controllers
             if (reservation == null || reservation.Status != ReservationStatus.Pending)
             {
                 return RedirectToAction("Index", "Reservations"); 
+            }
+
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var passenger = await _context.Passengers
+                    .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+            if (passenger == null || reservation.PassengerId != passenger.Id)
+            {
+                return Forbid();
             }
 
             decimal totalPrice = reservation.Schedule.Route.TicketPrice;
@@ -77,6 +88,15 @@ namespace IntercityTransportManagementSystem.Controllers
             if (reservation == null)
             {
                 return BadRequest("Невалидна резервация.");
+            }
+
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var passenger = await _context.Passengers
+                    .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+            if (passenger == null || reservation.PassengerId != passenger.Id)
+            {
+                return Forbid();
             }
 
             var seatLock = await _context.BusSeatLocks
@@ -124,7 +144,7 @@ namespace IntercityTransportManagementSystem.Controllers
             {
                 await _notificationService.CreateNotificationAsync(reservation.Passenger.UserId.Value, "Успешно купен билет",
                     $"Вашият билет за {reservation.Schedule.Route.StartDestination} - {reservation.Schedule.Route.FinalDestination} " +
-                    $"на {reservation.Schedule.TravelDate:dd.MM.yyyy} в {reservation.Schedule.DepartureTime:HH:mm} е успешно купен.",
+                    $"на {reservation.Schedule.TravelDate:dd.MM.yyyy} в {reservation.Schedule.DepartureTime:HH:mm} часа е успешно купен.",
                     NotificationType.TicketPurchased);
             }
 
@@ -185,7 +205,24 @@ namespace IntercityTransportManagementSystem.Controllers
                 ViewBag.Outbound = outbound ?? reservation;
                 ViewBag.Return = returnTrip;
             }
-            
+
+            if (User.IsInRole("Passenger"))
+            {
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var passenger = await _context.Passengers
+                    .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+                if (passenger == null || reservation.PassengerId != passenger.Id)
+                {
+                    return Forbid();
+                }
+            }
+            else if (!User.IsInRole("Administrator") && !User.IsInRole("Driver"))
+            {
+                return Forbid();
+            }
+
             return View(reservation);
         }
 
@@ -205,6 +242,25 @@ namespace IntercityTransportManagementSystem.Controllers
                     .ThenInclude(r => r.Seat)
                 .AsNoTracking()
                 .AsQueryable();
+
+            if (User.IsInRole("Passenger"))
+            {
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var passenger = await _context.Passengers
+                    .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+                if (passenger == null)
+                {
+                    return Forbid();
+                }
+
+                paymentsQuery = paymentsQuery.Where(p => p.PassengerId == passenger.Id);
+            }
+            else if (!User.IsInRole("Administrator") && !User.IsInRole("Driver"))
+            {
+                return Forbid();
+            }
 
             // Филтриране по име и фамилия на пътник
             if (!string.IsNullOrWhiteSpace(searchString))
@@ -306,7 +362,7 @@ namespace IntercityTransportManagementSystem.Controllers
                     paymentsQuery = paymentsQuery.OrderBy(p => p.PaymentMethod);
                     break;
 
-                case "paymnetMethod_descending":
+                case "paymentMethod_descending":
                     paymentsQuery = paymentsQuery.OrderByDescending(p => p.PaymentMethod);
                     break;
 
@@ -366,9 +422,27 @@ namespace IntercityTransportManagementSystem.Controllers
                 .Include(p => p.Reservation)
                     .ThenInclude(r => r.Seat)
                 .FirstOrDefaultAsync(m => m.Id == id);
+            
             if (payment == null)
             {
                 return NotFound();
+            }
+
+            if (User.IsInRole("Passenger"))
+            {
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var passenger = await _context.Passengers
+                    .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+                if (passenger == null || payment.PassengerId != passenger.Id)
+                {
+                    return Forbid();
+                }
+            }
+            else if (!User.IsInRole("Administrator") && !User.IsInRole("Driver"))
+            {
+                return Forbid();
             }
 
             return View(payment);
@@ -515,8 +589,32 @@ namespace IntercityTransportManagementSystem.Controllers
 
         // Метод за генериране на QR код за билет
         [HttpGet]
-        public IActionResult GenerateTicketQRCode(int reservationId)
+        public async Task<IActionResult> GenerateTicketQRCode(int reservationId)
         {
+            var reservation = await _context.Reservations
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            if (User.IsInRole("Passenger"))
+            {
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var passenger = await _context.Passengers
+                        .FirstOrDefaultAsync(p => p.UserId == currentUserId);
+
+                if (passenger == null || reservation.PassengerId != passenger.Id)
+                {
+                    return Forbid();
+                }
+            }
+            else if (!User.IsInRole("Administrator") && !User.IsInRole("Driver"))
+            {
+                return Forbid();
+            }
+
             // Генериране на пълния URL адрес към метода  Success
             string ticketUrl = Url.Action("Success", "Payments", new { reservationId = reservationId, method = "QR" }, protocol: Request.Scheme);
 

@@ -3,13 +3,13 @@
 	Layout = "~/Views/Shared/_AccountLayout.cshtml";
 }
 
-<div class="account-box text-center">
-	<h2 class="text-danger">Нямате права за достъп до тази страница.</h2>
-	<p>Ако мислите, че това е грешка, свържете се с администратора.</p>
+<div class="d-flex justify-content-center align-items-center min-vh-100">
+	<div class="account-box text-center">
+		<h2 class="text-danger">Нямате права за достъп до тази страница.</h2>
+		<p>Ако мислите, че това е грешка, свържете се с администратора.</p>
+	
+		<a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">
+			Към началната страница
+		</a>
+	</div>
 </div>
-
-@section Scripts {
-	@{
-		await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
-	}
-}

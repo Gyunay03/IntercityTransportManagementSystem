@@ -1,8 +1,22 @@
 ﻿@using IntercityTransportManagementSystem.Enums;
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
 @model IntercityTransportManagementSystem.Models.Refund
 
 @{
+    ViewData["Title"] = "Детайли за възстановяване";
     decimal euroCourse = 1.95583m;
+}
+
+@functions {
+    public string GetDisplayName(Enum enumValue)
+    {
+        return enumValue.GetType()
+            .GetMember(enumValue.ToString())
+            .First()
+            .GetCustomAttribute<DisplayAttribute>()?
+            .GetName() ?? enumValue.ToString();
+    }
 }
 
 <div class="container mt-4">
@@ -22,22 +36,24 @@
                     @if (Model.Status == RefundStatus.Pending)
                     {
                         <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-success btn-lg">Одобри връщането</button>
+                            @Html.AntiForgeryToken()
+                            <input type="submit" class="btn btn-success btn-lg" value="Одобри връщането" />
                         </form>
 
                         <hr />
                         <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
                             <div class="mb-3 text-start">
                                 <label>Причина за отказ:</label>
                                 <textarea name="reason" class="form-control" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-danger">Откажи възстановяването</button>
+                            <input type="submit" class="btn btn-danger" value="Откажи възстановяването" />
                         </form>
                     }
                     else
                     {
                         <div class="alert alert-info">
-                            Статус: @Model.Status <br />
+                            Статус: @GetDisplayName(Model.Status)<br />
                             Обработено на: @Model.ProcessedDate
                         </div>
                     }

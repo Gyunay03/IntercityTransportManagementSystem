@@ -1,9 +1,23 @@
 ﻿@model IEnumerable<IntercityTransportManagementSystem.Models.BusRequest>
 @using IntercityTransportManagementSystem.Enums
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
 
 @{
 	ViewData["Title"] = "Заявка за нов курс";
 }
+
+@functions {
+	public string GetDisplayName(Enum enumValue)
+	{
+		return enumValue.GetType()
+			.GetMember(enumValue.ToString())
+			.First()
+			.GetCustomAttribute<DisplayAttribute>()?
+			.GetName() ?? enumValue.ToString();
+	}
+}
+
 
 <div class="container mt-4">
 	<h2 class="text-center mb-4">Заявки за нов курс</h2>
@@ -31,7 +45,7 @@
 					<td>
 						<span class="badge bg-@(request.Status == BusRequestStatus.Pending ? "warning" :
 												request.Status == BusRequestStatus.Approved ? "success" : "danger")">
-							@request.Status
+							@GetDisplayName(request.Status)
 						</span>
 					</td>
 
@@ -39,13 +53,14 @@
 						@if (request.Status == BusRequestStatus.Pending)
 						{
 							<form asp-action="Approve" method="post" class="d-flex gap-2 mb-2">
+								@Html.AntiForgeryToken()
 								<input type="hidden" name="id" value="@request.Id" />
 
 								<select name="newBusId" class="form-select" required>
 									<option value="">Изберете автобус</option>
 									@foreach (var bus in ViewBag.Buses)
 									{
-										<option value="@bus.Id"	>
+										<option value="@bus.Id">
 											Автобус @bus.Id (Капацитет: @bus.Capacity)
 										</option>
 									}
@@ -55,8 +70,9 @@
 							</form>
 							
 							<form asp-action="Reject" method="post">
+								@Html.AntiForgeryToken()
 								<input type="hidden" name="id" value="@request.Id" />
-								<input type="submit" class="btn btn-danger" value="Откажи" />
+								<input type="submit" class="btn btn-danger btn-sm" value="Откажи" />
 							</form>
 						}
 						else

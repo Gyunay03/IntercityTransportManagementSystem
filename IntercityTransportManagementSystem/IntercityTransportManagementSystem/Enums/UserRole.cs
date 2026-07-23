@@ -6,8 +6,10 @@ namespace IntercityTransportManagementSystem.Enums
     {
         [Display(Name = "Администратор")]
         Administrator = 1,
+        
         [Display(Name = "Пътник")]
         Passenger = 2,
+        
         [Display(Name = "Шофьор")]
         Driver = 3
     }

@@ -30,7 +30,6 @@ namespace IntercityTransportManagementSystem.Controllers
                     .ThenInclude(p => p.Reservation)
                         .ThenInclude(res => res.Schedule)
                             .ThenInclude(s => s.Route)
-                .OrderByDescending(r => r.RequestDate)
                 .ToArrayAsync();
 
             return View(refunds);
@@ -147,7 +146,6 @@ namespace IntercityTransportManagementSystem.Controllers
                         .ThenInclude(res => res.Schedule)
                             .ThenInclude(s => s.Route)
                 .Where(r => r.Payment.Reservation.Passenger.UserId == currentUserId)
-                .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
 
             return View(myRefunds);

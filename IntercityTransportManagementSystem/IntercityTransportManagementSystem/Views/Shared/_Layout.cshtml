@@ -16,8 +16,56 @@
             <div class="container-fluid">
                 <a class="navbar-brand center-navbar-title" asp-area="" asp-controller="Home" asp-action="Index">Система за управление на междуградски транспорт</a>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <div class="d-flex ms-auto">
-                        <partial name="_LoginPartial" />
+                    <div class="d-flex ms-auto align-items-center user-header-area">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <a asp-controller="Notifications" asp-action="Index" class="notification-header-link">
+                                <i class="bi bi-bell-fill"></i>
+                                <span id="notification-count" class="notification-count">0</span>
+                            </a>   
+                            
+                            <div class="dropdown">
+                                <button class="btn user-dropdown-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle"></i>
+                                    @User.Identity.Name
+                                </button>
+
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Notifications" asp-action="Index">
+                                        <i class="bi bi-bell"></i>  Уведомления
+                                    </a>
+                                </li> 
+                                
+                                    @if (User.IsInRole("Passenger"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Account" asp-action="MyHistory">
+                                                <i class="bi bi-ticket-perforated"></i>  Моите резервации и билети
+                                            </a>
+                                        </li>   
+                                        
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Refunds" asp-action="MyRefunds">
+                                                Анулирани плащания
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <input type="submit" class="dropdown-item" value="Изход" />
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <partial name="_LoginPartial" />
+                        }
                     </div>
                 </div>
             </div>
@@ -106,11 +154,14 @@
                                 </li>
                             }
                             
-                            <li class="nav-item">
-                                <a asp-controller="Refunds" asp-action="MyRefunds" class="nav-link text-white">
-                                    <img src="/images/return_money.png" alt="" class="sidebar-icon" />  Върнати суми
-                                </a>
-                            </li>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="Refunds" asp-action="Index" class="nav-link text-white">
+                                        <img src="/images/return_money.png" alt="" class="sidebar-icon" />  Анулирани плащания
+                                    </a>
+                                </li>
+                            }     
 
                             <li class="nav-item">
                                 <a asp-controller="Map" asp-action="Index" class="nav-link text-white">
@@ -147,6 +198,33 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
+    <script>
+        async function loadUnreadNotificationsCount() {
+            try {
+                const response = await fetch('/Notifications/UnreadCount');
+                const count = await response.json();
+
+                const badge = document.getElementById('notification-count');
+
+                if(!badge) {
+                    return;
+                }
+
+                if(count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch {
+                console.log('Неуспешно зареждане на броя уведомления.');
+            }
+        }
+
+        loadUnreadNotificationsCount();
+        setInterval(loadUnreadNotificationsCount, 30000);
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
@@ -157,5 +235,48 @@
         height: 18px;
         margin-right: 6px;
         vertical-align: text-bottom;
+    }
+
+    .user-header-area {
+        gap: 12px;
+    }
+
+    .notification-header-link {
+        position: relative;
+        color: white;
+        font-size: 22px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .notification-header-link:hover {
+        color: #f1f1f1;
+    }
+
+    .notification-count {
+        position: absolute;
+        top: -7px;
+        right: -10px;
+        background-color: #dc3545;
+        color: white;
+        font-size: 12px;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 18px;
+        display: none;
+    }
+
+    .user-dropdown-button {
+        background-color: #0aa000;
+        color: white;
+        border: none;
+    }
+
+    .user-dropdown-button:hover, .user-dropdown-button:focus {
+        background-color: #088600;
+        color: white;
     }
 </style>

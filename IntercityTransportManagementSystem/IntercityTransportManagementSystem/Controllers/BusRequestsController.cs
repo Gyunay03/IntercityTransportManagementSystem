@@ -54,6 +54,8 @@ namespace IntercityTransportManagementSystem.Controllers
                 RouteId = request.Schedule.RouteId,
                 DepartureTime = request.Schedule.DepartureTime,
                 ArrivalTime = request.Schedule.ArrivalTime,
+                TravelDate = request.Schedule.TravelDate,
+                DriverId = request.Schedule.DriverId,
                 BusId = newBusId
             };
 
@@ -73,9 +75,9 @@ namespace IntercityTransportManagementSystem.Controllers
         {
             var request = await _context.BusRequests.FindAsync(id);
 
-            if (request == null)
+            if (request.Status != BusRequestStatus.Pending)
             {
-                return NotFound();
+                return BadRequest("Already processed");
             }
 
             request.Status = BusRequestStatus.Rejected;

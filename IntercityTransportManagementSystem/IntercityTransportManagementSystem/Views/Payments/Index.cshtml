@@ -3,45 +3,52 @@
 @model PaymentIndexViewModel
 
 @{
-    ViewData["Title"] = "Купуване на билет";
+    ViewData["Title"] = "Плащания";
     decimal euroCourse = 1.95583m;
 }
 
-<div class="container mt-4">
-    <div class="card shadow p-4">
-		<h2 class="text-center mb-4">Купуване на билет</h2>
-        <hr />
+<div class="payments-container">
+    <div class="payments-header">
+		<h2>
+            <i class="bi bi-ticket-perforated me-2"></i>
+            Плащания
+        </h2>
+    </div>
 
-        <form method="get" id="filterForm" class="row g-2 align-items-end mb-4">
-            <div class="col-md-2">
-                <label for="searchString" class="form-label fw-bold">Търсене</label>
-                <input type="text" id="searchString" name="searchString"
-                       class="form-control"
-                       placeholder="Име, фамилия, автобус ..."
-                       value="@Model.SearchString" />
-            </div>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="searchString" class="form-label fw-bold">Търсене</label>
+                    <input type="text" id="searchString" name="searchString"
+                           class="form-control"
+                           placeholder="Име, фамилия, автобус ..."
+                           value="@Model.SearchString" />
+                </div>
 
-            <div class="col-md-2">
-                <label class="form-label fw-bold">От дата</label>
-                <input type="date" name="fromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
-            </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">От дата</label>
+                    <input type="date" name="fromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+                </div>
 
-            <div class="col-md-2">
-                <label class="form-label fw-bold">До дата</label>
-                <input type="date" name="toDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
-            </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">До дата</label>
+                    <input type="date" name="toDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+                </div>
 
-            <div class="col-md-2">
-                <label class="form-label fw-bold">Начин на плащане</label>
-                <select asp-for="PaymentMethod" class="form-select" asp-items="Html.GetEnumSelectList<PaymentMethod>()">
-                    <option value="">Всички</option>
-                </select>
-            </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Начин на плащане</label>
+                    <select asp-for="PaymentMethod" class="form-select" asp-items="Html.GetEnumSelectList<PaymentMethod>()">
+                        <option value="">Всички</option>
+                    </select>
+                </div>
 
-            <div class="col-md-2">
-                <input type="submit" value="Търси" class="btn btn-outline-primary" />
-            </div>
-        </form>
+                <div class="col-md-1 d-grid">
+                    <input type="submit" value="Търси" class="btn btn-outline-primary" />
+                </div>
+            </form>
+        </div>
+    </div>
 
         @if (TempData["Error"] != null)
         {
@@ -53,254 +60,284 @@
         
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>    
         }
 
-        <div class="table-responsive">
-            @if (!Model.Payments.Any())
-            {
-                <div class="alert alert-warning text-center">
-                    Няма намерен билет за тази дата или това разписание.
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="table-responsive">
+                    @if (!Model.Payments.Any())
+                    {
+                        <div class="alert alert-warning text-center">
+                            Няма намерен билет за тази дата или това разписание.
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="table table-bordered text-center table-hover align-middle table-striped">
+                            <thead class="table-info align-middle">
+                                <tr>
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "passenger" ? "passenger_descending" : "passenger")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Пътник
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "travelDate" ? "travelDate_descending" : "travelDate")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Дата на пътуване
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "route" ? "route_descending" : "route")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Маршрут
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "departureTime" ? "departureTime_descending" : "departureTime")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Час на тръгване
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "bus" ? "bus_descending" : "bus")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Автобус
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "seat" ? "seat_descending" : "seat")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Място
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "sum" ? "sum_descending" : "sum")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Сума
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "paymentDate" ? "paymentDate_descending" : "paymentDate")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Дата на плащане
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "paymentMethod" ? "paymentMethod_descending" : "paymentMethod")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Начин на плащане
+                                        </a>
+                                    </th>
+
+                                    <th>
+                                        <a asp-action="Index"
+                                            asp-route-sortOrder="@(Model.SortOrder == "paymentStatus" ? "paymentStatus_descending" : "paymentStatus")"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod"
+                                            class="text-decoration-none text-dark fw-semibold">
+                                            Статус
+                                        </a>
+                                    </th>
+
+                                    <th class="text-center">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Payments)
+                                {
+                                    decimal eurPrice = item.Reservation.Schedule.Route.TicketPrice;
+                                    decimal priceInLeva = eurPrice * euroCourse;
+                                    <tr>
+                                        <td>@item.Passenger.Name @item.Passenger.LastName</td>
+                                        <td>@item.Reservation.Schedule.TravelDate.ToString("dd.MM.yyyy")</td>
+                                        <td>@item.Reservation.Schedule.Route.StartDestination - @item.Reservation.Schedule.Route.FinalDestination</td>
+                                        <td>@item.Reservation.Schedule.DepartureTime.ToString("HH:mm") ч.</td>
+                                        <td>@item.Reservation.Schedule.Bus.RegistrationNumber</td>
+                                        <td>@item.Reservation.Seat.Number</td>
+                                        <td>
+                                            @eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)
+                                        </td>
+                                        <td>@item.PaymentDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>
+                                            @switch (item.PaymentMethod)
+                                            {
+                                                case PaymentMethod.Card:
+                                                    <span class="badge bg-warning text-dark">С карта</span>
+                                                    break;
+                                                case PaymentMethod.Cash:
+                                                    <span class="badge bg-success">В брой</span>
+                                                    break;
+                                                case PaymentMethod.Online:
+                                                    <span class="badge bg-primary">Онлайн</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.PaymentStatus == PaymentStatus.Completed)
+                                            {
+                                                <span class="badge bg-success">Платено</span>
+                                            }
+                                            else if (item.PaymentStatus == PaymentStatus.Cancelled)
+                                            {
+                                                <span class="badge bg-danger">Анулирано</span>
+                                            }
+                                            else if (item.PaymentStatus == PaymentStatus.Pending)
+                                            {
+                                                <span class="badge bg-warning text-dark">Чакащо</span>
+                                            }
+                                            else if (item.PaymentStatus == PaymentStatus.Refunded)
+                                            {
+                                                <span class="badge bg-secondary">Върнато</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm">
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-eye me-1"></i> Детайли
+                                                </a>
+                                                @if (User.IsInRole("Administrator"))
+                                                {
+                                                    <a asp-action="CancelPayment" asp-route-id="@item.Id" class="btn btn-outline-danger">
+                                                    <i class="bi bi-x-circle me-1"></i> Анулирай
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                        <nav>
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link"
+                                        asp-action="Index"
+                                        asp-route-page="@(Model.CurrentPage - 1)"
+                                        asp-route-searchString="@Model.SearchString"
+                                        asp-route-sortOrder="@Model.SortOrder"
+                                        asp-route-fromDate="@Model.FromDate"
+                                        asp-route-toDate="@Model.ToDate"
+                                        asp-route-paymentMethod="@Model.PaymentMethod">
+                                        Назад
+                                    </a>
+                                </li>
+
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link"
+                                            asp-action="Index"
+                                            asp-route-page="@i"
+                                            asp-route-searchString="@Model.SearchString"
+                                            asp-route-sortOrder="@Model.SortOrder"
+                                            asp-route-fromDate="@Model.FromDate"
+                                            asp-route-toDate="@Model.ToDate"
+                                            asp-route-paymentMethod="@Model.PaymentMethod">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link"
+                                        asp-action="Index"
+                                        asp-route-page="@(Model.CurrentPage + 1)"
+                                        asp-route-searchString="@Model.SearchString"
+                                        asp-route-sortOrder="@Model.SortOrder"
+                                        asp-route-fromDate="@Model.FromDate"
+                                        asp-route-toDate="@Model.ToDate"
+                                        asp-route-paymentMethod="@Model.PaymentMethod">
+                                        Напред
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
                 </div>
-            }
-            else
-            {
-                <table class="table table-bordered text-center table-hover align-middle table-striped">
-                    <thead class="table-info align-middle">
-                        <tr>
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "passenger" ? "passenger_descending" : "passenger")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Пътник
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "travelDate" ? "travelDate_descending" : "travelDate")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Дата на пътуване
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "route" ? "route_descending" : "route")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Маршрут
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "departureTime" ? "departureTime_descending" : "departureTime")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Час на тръгване
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "bus" ? "bus_descending" : "bus")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Автобус
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "seat" ? "seat_descending" : "seat")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Място
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "sum" ? "sum_descending" : "sum")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Сума
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "paymentDate" ? "paymentDate_descending" : "paymentDate")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Дата на плащане
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "paymentMethod" ? "paymentMethod_descending" : "paymentMethod")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Начин на плащане
-                                </a>
-                            </th>
-                            
-                            <th>
-                                <a asp-action="Index"
-                                   asp-route-sortOrder="@(Model.SortOrder == "paymentStatus" ? "paymentStatus_descending" : "paymentStatus")"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod"
-                                   class="text-decoration-none text-dark fw-semibold">
-                                   Статус
-                                </a>
-                            </th>
-
-                            <th class="text-center">Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Payments)
-                        {
-                            decimal eurPrice = item.Reservation.Schedule.Route.TicketPrice;
-                            decimal priceInLeva = eurPrice * euroCourse;
-                            <tr>
-								<td>@item.Passenger.Name @item.Passenger.LastName</td>
-								<td>@item.Reservation.Schedule.TravelDate.ToString("dd.MM.yyyy")</td>
-								<td>@item.Reservation.Schedule.Route.StartDestination - @item.Reservation.Schedule.Route.FinalDestination</td>
-								<td>@item.Reservation.Schedule.DepartureTime.ToString("HH:mm") ч.</td>
-								<td>@item.Reservation.Schedule.Bus.RegistrationNumber</td>
-								<td>@item.Reservation.Seat.Number</td>
-								<td>
-                                    @eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)
-                                </td>
-								<td>@item.PaymentDate.ToString("dd.MM.yyyy HH:mm")</td>
-								<td>
-                                    @switch (@item.PaymentMethod)
-                                    {
-                                        case PaymentMethod.Card:
-                                            <span class="badge bg-warning text-dark">С карта</span>
-                                            break;
-                                        case PaymentMethod.Cash:
-                                            <span class="badge bg-success">В брой</span>
-                                            break;
-                                        case PaymentMethod.Online:
-                                            <span class="badge bg-primary">Онлайн</span>
-                                            break;
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.PaymentStatus == PaymentStatus.Completed)
-                                    {
-                                        <span class="badge bg-success">Платено</span>
-                                    }
-                                    else if (item.PaymentStatus == PaymentStatus.Cancelled)
-                                    {
-                                        <span class="badge bg-danger">Анулирано</span>    
-                                    }
-                                    else if (item.PaymentStatus == PaymentStatus.Pending)
-                                    {
-                                        <span class="badge bg-warning">Чакащо</span>
-                                    }
-                                    else if (item.PaymentStatus == PaymentStatus.Refunded)
-                                    {
-                                        <span class="badge bg-secondary">Върнато</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Детайли</a>
-                                        @if (User.IsInRole("Administrator"))
-                                        {
-                                            <a asp-action="CancelPayment" asp-route-id="@item.Id" class="btn btn-outline-danger">Анулирай</a>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-page="@(Model.CurrentPage - 1)"
-                               asp-route-searchString="@Model.SearchString"
-                               asp-route-sortOrder="@Model.SortOrder"
-                               asp-route-fromDate="@Model.FromDate"
-                               asp-route-toDate="@Model.ToDate"
-                               asp-route-paymentMethod="@Model.PaymentMethod">
-                                Назад
-                            </a>
-                        </li>
-
-                        @for (int i = 1; i <= Model.TotalPages; i++)
-                        {
-                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                <a class="page-link"
-                                   asp-action="Index"
-                                   asp-route-page="@i"
-                                   asp-route-searchString="@Model.SearchString"
-                                   asp-route-sortOrder="@Model.SortOrder"
-                                   asp-route-fromDate="@Model.FromDate"
-                                   asp-route-toDate="@Model.ToDate"
-                                   asp-route-paymentMethod="@Model.PaymentMethod">
-                                   @i
-                                </a>
-                            </li>
-                        }
-
-                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-page="@(Model.CurrentPage + 1)"
-                               asp-route-searchString="@Model.SearchString"
-                               asp-route-sortOrder="@Model.SortOrder"
-                               asp-route-fromDate="@Model.FromDate"
-                               asp-route-toDate="@Model.ToDate"
-                               asp-route-paymentMethod="@Model.PaymentMethod">
-                               Напред
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            }
+            </div>
         </div>
-    </div>
 </div>
+
+<style>
+    .payments-container {
+        max-width: 1280px;
+        margin: 20px auto;
+    }
+
+    .payments-header {
+        background-color: rgba(255, 255, 255, 0.88);
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .payments-header h2 {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #1f2937;
+    }
+</style>

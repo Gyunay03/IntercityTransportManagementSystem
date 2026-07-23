@@ -31,7 +31,7 @@
 
 						<p>@notification.Message</p>
 
-						<small>@notification.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+						<small>@notification.CreatedAt.ToString("dd.MM.yyyy HH:mm") часа</small>
 
 						@if (!notification.IsRead)
 						{
@@ -46,8 +46,6 @@
 		}
 	</div>
 </div>
-
-
 
 <style>
 	.notification-container {
@@ -64,7 +62,7 @@
 	}
 
 	.notification-header h2 {
-		font: 28px;
+		font-size: 28px;
 		font-weight: bold;
 		margin: 0;
 		color: #1f2937;
@@ -105,5 +103,6 @@
 		background-color: rgba(255, 255, 255, 0.9);
 		padding: 14px;
 		border-radius: 6px;
+		text-align: center;
 	}
 </style>

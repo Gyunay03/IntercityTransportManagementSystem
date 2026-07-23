@@ -3,87 +3,99 @@
 
 @{
     ViewData["Title"] = "Детайли за билет";
-    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     decimal euroCourse = 1.95583m;
 }
 
-<h2 class="text-center mb-4">Детайли за билет</h2>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="bi bi-ticket-detailed me-2"></i>
+                        Детайли за билет
+                    </h3>
+                </div>
 
-<div class="form-narrow">
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-4">Пътник</dt>
-        <dd class="col-sm-8">@Model.Passenger.Name @Model.Passenger.LastName</dd>
-        
-        <dt class="col-sm-4">Дата на пътуване</dt>
-        <dd class="col-sm-8">@Model.Reservation.Schedule.TravelDate.ToString("dd.MM.yyyy")</dd>
-        
-        <dt class="col-sm-4">Маршрут</dt>
-        <dd class="col-sm-8">@Model.Reservation.Schedule.Route.StartDestination - @Model.Reservation.Schedule.Route.FinalDestination</dd>
-        
-        <dt class="col-sm-4">Час на тръгване</dt>
-        <dd class="col-sm-8">@Model.Reservation.Schedule.DepartureTime.ToString("HH:mm") ч.</dd>
-        
-        <dt class="col-sm-4">Автобук</dt>
-        <dd class="col-sm-8">@Model.Reservation.Schedule.Bus.RegistrationNumber</dd>
-        
-        <dt class="col-sm-4">Място</dt>
-        <dd class="col-sm-8">@Model.Reservation.Seat.Number</dd>
+                <div class="card-body p-4">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Пътник</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Passenger.Name @Model.Passenger.LastName</dd>
 
-        <dt class="col-sm-4">Тип на билета</dt>
-        <dd class="col-sm-8">
-            @(Model.Reservation.TicketType == TicketType.Ednoposochen ? "Еднопосочен" : "Двупосочен (с отстъпка)")
-        </dd>
+                        <dt class="col-sm-4 text-muted">Дата на пътуване</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Reservation.Schedule.TravelDate.ToString("dd.MM.yyyy")</dd>
 
-        <dt class = "col-sm-4">Сума</dt>
-        <dd class = "col-sm-8">
-            @{
-                decimal eurPrice = Model.Reservation.Schedule.Route.TicketPrice;
-                decimal priceInLeva = eurPrice * euroCourse;
-            }
-            @eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)
-        </dd>
-        
-        <dt class="col-sm-4">Дата на плащане</dt>
-        <dd class="col-sm-8">@Model.PaymentDate.ToString("dd.MM.yyyy")</dd>
+                        <dt class="col-sm-4 text-muted">Маршрут</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Reservation.Schedule.Route.StartDestination - @Model.Reservation.Schedule.Route.FinalDestination</dd>
 
-        <dt class = "col-sm-4">Начин на плащане</dt>
-        <dd class = "col-sm-8">
-            @switch (Model.PaymentMethod)
-            {
-                case PaymentMethod.Card:
-                    <span class="badge bg-warning text-dark">С карта</span>
-                    break;
-                case PaymentMethod.Cash:
-                    <span class="badge bg-success">В брой</span>
-                    break;
-                case PaymentMethod.Online:
-                    <span class="badge bg-primary">Онлайн</span>
-                    break;
-            }
-        </dd>
-        
-        <dt class = "col-sm-4">Статус на плащане</dt>
-        <dd class = "col-sm-8">
-            @switch (Model.PaymentStatus)
-            {
-                case PaymentStatus.Completed:
-                    <span class="badge bg-success">Платено</span>
-                    break;
-                case PaymentStatus.Cancelled:
-                    <span class="badge bg-danger">Анулирано</span>
-                    break;
-                case PaymentStatus.Pending:
-                    <span class="badge bg-warning">Чакащо</span>
-                    break;
-                case PaymentStatus.Refunded:
-                    <span class="badge bg-secondary">Върнато</span>
-                    break;
-            }
-        </dd>
-    </dl>
-</div>
+                        <dt class="col-sm-4 text-muted">Час на тръгване</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Reservation.Schedule.DepartureTime.ToString("HH:mm") ч.</dd>
 
-<div class="d-flex justify-content-center gap-2 mt-4">
-    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+                        <dt class="col-sm-4 text-muted">Автобус</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Reservation.Schedule.Bus.RegistrationNumber</dd>
+
+                        <dt class="col-sm-4 text-muted">Място</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Reservation.Seat.Number</dd>
+
+                        <dt class="col-sm-4 text-muted">Тип на билета</dt>
+                        <dd class="col-sm-8 fw-bold">
+                            @(Model.Reservation.TicketType == TicketType.Ednoposochen ? "Еднопосочен" : "Двупосочен (с отстъпка)")
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Сума</dt>
+                        <dd class="col-sm-8 fw-bold">
+                            @{
+                                decimal eurPrice = Model.Reservation.Schedule.Route.TicketPrice;
+                                decimal priceInLeva = eurPrice * euroCourse;
+                            }
+                            @eurPrice.ToString("F2") € / (@priceInLeva.ToString("F2") лв.)
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Дата на плащане</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.PaymentDate.ToString("dd.MM.yyyy")</dd>
+
+                        <dt class="col-sm-4 text-muted">Начин на плащане</dt>
+                        <dd class="col-sm-8 fw-bold">
+                            @switch (Model.PaymentMethod)
+                            {
+                                case PaymentMethod.Card:
+                                    <span class="badge bg-warning text-dark">С карта</span>
+                                    break;
+                                case PaymentMethod.Cash:
+                                    <span class="badge bg-success">В брой</span>
+                                    break;
+                                case PaymentMethod.Online:
+                                    <span class="badge bg-primary">Онлайн</span>
+                                    break;
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Статус на плащане</dt>
+                        <dd class="col-sm-8 fw-bold">
+                            @switch (Model.PaymentStatus)
+                            {
+                                case PaymentStatus.Completed:
+                                    <span class="badge bg-success">Платено</span>
+                                    break;
+                                case PaymentStatus.Cancelled:
+                                    <span class="badge bg-danger">Анулирано</span>
+                                    break;
+                                case PaymentStatus.Pending:
+                                    <span class="badge bg-warning text-dark">Чакащо</span>
+                                    break;
+                                case PaymentStatus.Refunded:
+                                    <span class="badge bg-secondary">Върнато</span>
+                                    break;
+                            }
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="card-footer bg-light text-center">
+                    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

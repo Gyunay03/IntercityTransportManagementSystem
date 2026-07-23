@@ -1,14 +1,19 @@
-﻿@model IEnumerable<IntercityTransportManagementSystem.Models.Refund>
-@using IntercityTransportManagementSystem.Enums
+﻿@using IntercityTransportManagementSystem.Enums
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@model IEnumerable<IntercityTransportManagementSystem.Models.Refund>
 
 @{
     ViewData["Title"] = "Моите заявки за връщане";
     decimal euroCourse = 1.95583m;
 }
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-clock-history"></i> История на анулиранията</h2>
+<div class="myRefund-container">
+    <div class="myRefund-header">
+        <h2>
+            <i class="bi bi-clock-history"></i> 
+            История на анулиранията
+        </h2>
         <a asp-controller="Payments" asp-action="Index" class="btn btn-outline-secondary">Към моите билети</a>
     </div>
 
@@ -80,3 +85,29 @@
         _ => "Неизвестен"
     };
 }
+
+<style>
+    .myRefund-container {
+        max-width: 1060px;
+        margin: 20px auto;
+    }
+
+    .myRefund-header {
+        background-color: rgba(255, 255, 255, 0.88);
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .myRefund-header h2 {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #1f2937;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+</style>

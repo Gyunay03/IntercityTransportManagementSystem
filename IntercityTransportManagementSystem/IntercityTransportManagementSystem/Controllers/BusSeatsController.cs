@@ -285,6 +285,7 @@ namespace IntercityTransportManagementSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> GenerateSeats()
         {
             FillDropdowns();
