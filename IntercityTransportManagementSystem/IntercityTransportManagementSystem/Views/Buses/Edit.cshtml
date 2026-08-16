@@ -2,32 +2,43 @@
 
 @{
     ViewData["Title"] = "Редактиране на автобус";
-    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2 class="text-center mb-4">Редактиране на автобус</h2>
-<div class="form-narrow">
-    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
-        @Html.AntiForgeryToken()
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <input type="hidden" asp-for="Id" />
-        
-        <div class="form-group">
-            <label asp-for="RegistrationNumber" class="form-label"></label>
-            <input asp-for="RegistrationNumber" class="form-control" />
-            <span asp-validation-for="RegistrationNumber" class="text-danger"></span>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h2 class="h3 mb-0"><i class="bi bi-pencil"></i>  Редактиране на автобус</h2>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="RegistrationNumber" class="form-label fw-bold"></label>
+                            <input asp-for="RegistrationNumber" class="form-control" />
+                            <span asp-validation-for="RegistrationNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Capacity" class="form-label fw-bold"></label>
+                            <input asp-for="Capacity" class="form-control" />
+                            <span asp-validation-for="Capacity" class="text-danger"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Откажи</a>
+                    <button type="submit" asp-action="Edit" class="btn btn-primary"> <i class="bi bi-check-lg"></i>  Запази</button>
+                </div>
+            </div>
         </div>
-        
-        <div class="form-group">
-            <label asp-for="Capacity" class="form-label"></label>
-            <input asp-for="Capacity" class="form-control" />
-            <span asp-validation-for="Capacity" class="text-danger"></span>
-        </div>
-        <div class="d-flex justify-content-center gap-2 mt-4">
-            <a asp-action="Index" class="btn btn-secondary">Откажи</a>
-            <input type="submit" asp-action="Edit" value="Запази" class="btn btn-primary" />
-        </div>
-    </form>
+    </div>
 </div>
 
 @section Scripts {

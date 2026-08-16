@@ -114,6 +114,7 @@ namespace IntercityTransportManagementSystem
 
             app.MapHub<ReservationHub>("/reservationHub");
             app.MapHub<BusHub>("/busHub");
+            app.MapHub<MessageHub>("/messageHub");
 
             // Добавяне на Dashboard (UI)
             app.UseHangfireDashboard("/hangfire", new DashboardOptions

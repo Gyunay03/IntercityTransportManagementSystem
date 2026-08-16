@@ -2,30 +2,41 @@
 
 @{
     ViewData["Title"] = "Изтриване на автобус";
-    Layout = "~/Views/Shared/_AdministratorLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2 class="text-center mt-4">Изтриване на автобус</h2>
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-6">
+			<div class="card border-danger shadow">
+				<div class="card-header bg-danger text-white text-center py-3">
+					<h3 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i> Изтриване на автобус</h3>
+				</div>
+				<div class="card-body p-4">
+					<div class="alert alert-warning text-center fw-semibold mb-3">
+						Сигурни ли сте, че искате да изтриете този автобус?
+					</div>
 
-<div class="alert alert-warning text-center">
-    Сигурни ли сте, че искате да изтриете този автобус?
-</div>
-<hr />
+					<hr />
+					<div class="d-flex justify-content-center align-items-center gap-2 mb-2 fs-6">
+						<span class="fw-bold text-secondary">Регистрационен номер: </span>
+						<span class="fw-bold text-dark">@Model.RegistrationNumber</span>
+					</div>
+					
+					<div class="d-flex justify-content-center align-items-center gap-2 mb-2 fs-6">
+						<span class="fw-bold text-secondary">Капацитет: </span>
+						<span class="fw-bold text-dark">@Model.Capacity</span>
+					</div>
+				</div>
 
-<div class="form-narrow">
-    <dl class="row">
-        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.RegistrationNumber)</dt>
-        <dd class = "col-sm-8">@Html.DisplayFor(model => model.RegistrationNumber)</dd>
-        <dt class = "col-sm-4">@Html.DisplayNameFor(model => model.Capacity)</dt>
-        <dd class = "col-sm-8">@Html.DisplayFor(model => model.Capacity)</dd>
-    </dl>
-    
-    <form asp-action="Delete" class="mt-4">
-        <input type="hidden" asp-for="Id" />
-        <div class="d-flex justify-content-center gap-2">
-            <a asp-action="Index" class="btn btn-secondary">Откажи</a>
-            <input type="submit" value="Изтриване" class="btn btn-danger" />
-        </div>
-        
-    </form>
+				<div class="card-footer bg-light text-center py-3">
+					<form asp-action="Delete" method="post" class="mb-0">
+						@Html.AntiForgeryToken()
+						<a asp-action="Index" class="btn btn-outline-secondary">Откажи</a>
+						<button type="submit" class="btn btn-danger" data-ajax="false"><i class="bi bi-trash me-2"></i> Изтрий</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

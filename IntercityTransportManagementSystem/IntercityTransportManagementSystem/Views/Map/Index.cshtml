@@ -2,32 +2,90 @@
 	ViewData["Title"] = "Карта на маршрута";
 }
 
-<div class="row mb-3">
-	<div class="col-md-4">
-		<label for="lineSelect">Изберете маршрут</label>
-		<select id="lineSelect" class="form-select">
-			<option value="">Изберете линия</option>
-		</select>
+<div class="container-fluid py-3">
+	<div class="row mb-3 align-items-center">
+		<div class="col-md-5 col-lg-4">
+			<label for="lineSelect" class="form-label fw-bold">Изберете маршрут/линия</label>
+			<div class="input-group">
+				<span class="input-group-text bg-white"><i class="bi bi-bus-front"></i></span>
+			</div>
+			<select id="lineSelect" class="form-select">
+				<option value="">Изберете линия</option>
+			</select>
+		</div>
 	</div>
 </div>
 
-<div class="map-wrapper">
-	<div id="map" style="height: 600px; width: 100%;"></div>
-
-	<div class="map-legend">
-		<div class="legend-items">
-			<div class="legend-item">
-				<img src="~/images/realTimeBusIcon.png" alt="Реално време" />
-				<span>Реални данни</span>
-			</div>
-			<div class="legend-item">
-				<img src="~/images/simulatedBusIcon.png" alt="Симулация" />
-				<span>Симулация</span>
+<div class="row g-3 mb-3">
+	<div class="card border-0 shadow-sm bg-light">
+		<div class="card-body p-3 d-flex align-items-center">
+			<div class="fs-3 text-primary me-3"><i class="bi bi-clock-history"></i></div>
+			<div>
+				<div class="text-muted small">Очаквано пристигане</div>
+				<div class="fw-bold fs-6" id="kpuEta">--:--</div>
 			</div>
 		</div>
-		
-		<div class="legend-attribution">
-			<span class="text-muted">flaticon.com</span>
+	</div>
+</div>
+<div class="col-6 col-md-3">
+	<div class="card border-0 shadow-sm bg-light">
+		<div class="card-body p-3 d-flex align-items-center">
+			<div class="fs-3 text-info me-3"><i class="bi bi-speedometer2"></i></div>
+			<div>
+				<div class="text-muted small">Текуща скорост</div>
+				<div class="fw-bold fs-6" id="kpuEta">0 км/ч</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="col-6 col-md-3">
+	<div class="card border-0 shadow-sm bg-light">
+		<div class="card-body p-3 d-flex align-items-center">
+			<div class="fs-3 text-success me-3"><i class="bi bi-activity"></i></div>
+			<div>
+				<div class="text-muted small">Статус</div>
+				<div class="fw-bold fs-6" id="kpuEta">Няма данни</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row g-3">
+	<div class="col-lg-8">
+		<div class="card border-0 shadow-sm">
+			<div class="map-wrapper">
+				<div id="map" style="height: 550px; width: 100%; border-radius: 6px;"></div>
+				
+				<div class="map-legend">	
+					<div class="legend-items">
+						<div class="legend-item">
+							<img src="~/images/realTimeBusIcon.png" alt="Реално време" />
+							<span>Реални данни</span>
+						</div>
+						<div class="legend-item">
+							<img src="~/images/simulatedBusIcon.png" alt="Симулация" />
+							<span>Симулация</span>
+						</div>
+					</div>
+				</div>
+
+				<button id="recenterBtn" class="btn btn-light shadow-sm map-recenter-btn d-none" title="Центрирай върху автобуса">
+					<i class="bi bi-crosshair fs-5"></i>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-kg-4">
+		<div class="card border-0 shadow-sm h-100">
+			<div class="card-header bg-white py-3 border-0">
+				<h5 class="card-title mb-0 fw-bold"><i class="bi bi-geo-alt me-2 text-primary"></i>  Маршрут и Спирки</h5>
+			</div>
+			<div class="card-body p-3 overflow-auto" style="max-height: 480px;">
+				<ul class="timeline" id="stopsTimeline">
+					<li class="text-muted small">Изберете маршрут, за да видите спирките.</li>
+				</ul>
+			</div>
 		</div>
 	</div>
 </div>
@@ -46,6 +104,7 @@
 
 	var currentTripId = null;
 	var busMarker = null;
+	var lastBusLatLng = null;
 	var routeLayer = L.layerGroup().addTo(map);
 
 	// Икони за автобус (различни цветове за реално време и симулация)
@@ -61,7 +120,7 @@
 					iconAnchor: [17, 17]
 	});
 
-	function updateMarkerPosition(tripId, lat, lng, isRealTime, speed) {
+	function updateMarkerPosition(tripId, lat, lng, isRealTime, speed, etaText, capacityText) {
 		// Превръщаме всичко в чисти типове за сигурност
 		const tId = Number(tripId);
 		const selId = Number(currentTripId);
@@ -73,7 +132,15 @@
 		const statusText = isRT ? "Реално време" : "Симулация";
 		const icon = isRT ? realTimeBusIcon : simulatedBusIcon;
 
+		// Обновяване на KPI картите
+		document.getElementById('kpiSpeed').innerText = `${displaySpeed} км/ч`;
+		document.getElementById('kpiStatus').innerText = displaySpeed > 0 ? "В движение" : "Спрял";
+		if(etaText) document.getElementById('kpiEta').innerText = etaText;
+		if(capacityText) document.getElementById('kpiCapacity').innerText = capacityText;
+
 		const popupContent = `
+			<div class="p-1">
+				<div class="d-flex">
 					<b>Превозно средство</b><br>
 					<b>Тип данни:</b> ${statusText}<br>
 					<b>Статус:</b> ${displaySpeed > 0 ? 'В движение' : 'Спрял на спирка'}<br>

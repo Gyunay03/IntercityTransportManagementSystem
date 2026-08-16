@@ -1,0 +1,169 @@
+﻿@model IEnumerable<IntercityTransportManagementSystem.Models.Message>
+@using IntercityTransportManagementSystem.Enums;
+
+@{
+    ViewData["Title"] = "Съобщения и сигнали";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-center"><i class="bi bi-chat-dots"></i> Съобщения и сигнали</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Ново съобщение/ Сигнал
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @TempData["Info"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form method="get" class="card card-body bg-light mb-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="searchString" class="form-control" placeholder="Търсене по име, имейл, текст..." value="@ViewBag.SearchString" />
+            </div>
+            <div class="col-md-3">
+                <select name="typeFilter" class="form-select">
+                    <option value="">Всички типове</option>
+                    <option value="@MessageType.StandardMessage" selected="@(ViewBag.TypeFilter == MessageType.StandardMessage)">Обикновено съобщение</option>
+                    <option value="@MessageType.ProblemReport" selected="@(ViewBag.TypeFilter == MessageType.ProblemReport)">Сигнал за проблем</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="isResolvedFilter" class="form-select">
+                    <option value="">Всички статуси</option>
+                    <option value="false" selected="@(ViewBag.IsResolvedFilter == false)">Активни (Нерешени)</option>
+                    <option value="true" selected="@(ViewBag.IsResolvedFilter == true)">Решени</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <i class="bi bi-search"> <input type="submit" class="btn btn-outline-primary w-100" /></i>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Изчисти"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle mb-0 bg-white">
+            <thead>
+                <tr>
+                    <th>Тип</th>
+                    <th>Курс</th>
+                    <th>Изпращач</th>
+                    <th>Получател</th>
+                    <th>Текст</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Няма намерени съобщения.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (item.MessageType == MessageType.ProblemReport)
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Сигнал</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark"><i class="bi bi-envelope"> Чат</i></span>
+                                }
+                            </td>
+
+                            <td>
+                                @item.ScheduleId <br />
+                                <small class="text-muted">@item.Schedule?.Route?.StartDestination - @item.Schedule?.Route?.FinalDestination</small>
+                            </td>
+
+                            <td>@item.Sender?.Name @item.Sender?.LastName</td>
+
+                            <td>
+                                @if (item.Receiver != null)
+                                {
+                                    @($"{item.Receiver.Name} {item.Receiver.LastName}")
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Към администратор</span>
+                                }
+                            </td>
+
+                            <td>
+                                @(item.Content.Length > 40 ? item.Content.Substring(0, 40) + "..." : item.Content)
+                            </td>
+
+                            <td>@item.SentAt.ToString("dd.MM.yyyy HH:mm")</td>
+
+                            <td>
+                                @if (item.MessageType == MessageType.ProblemReport)
+                                {
+                                    @if (item.IsResolved)
+                                    {
+                                        <span class="badge bg-success">Решен</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Активен</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.Id"> Редактирай</a>
+                                <a asp-action="Details" asp-route-id="@item.Id">Детайли</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id">Изтрий</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)">Назад</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)">Напред</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

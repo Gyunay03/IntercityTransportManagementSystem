@@ -1,0 +1,28 @@
+﻿@model IntercityTransportManagementSystem.Models.Message
+
+@{
+    ViewData["Title"] = "Изтриване на съобщение";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h4 class="card-title mb-0"><i class="bi bi-exclamation-octagon"></i></h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">Сигурни ли сте, че искате да изтриете това съобщение?</p>
+            <div class="p-3 bg-light rounded mb-3 border">
+                <strong>Съдържание:</strong>
+                <p class="mb-0 text-muted">@Model.Content</p>
+            </div>
+
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+                    <i class="bi bi-trash"><input type="submit" class="btn btn-danger" value="Потвърди изтриването" /></i>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

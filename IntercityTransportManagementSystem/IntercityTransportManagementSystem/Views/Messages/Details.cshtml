@@ -1,0 +1,117 @@
+﻿@model IntercityTransportManagementSystem.Models.Message
+@using IntercityTransportManagementSystem.Enums
+@using System.Security.Claims
+
+@{
+    ViewData["Title"] = "Детайли за съобщение";
+    var conversation = ViewBag.Conversation as List<IntercityTransportManagementSystem.Models.Message> ?? new List<IntercityTransportManagementSystem.Models.Message>();
+    var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">Детайли за съобщението/подадения сигнал</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Тип:</strong>
+                    @if (Model.MessageType == MessageType.ProblemReport)
+                    {
+                        <span class="badge bg-danger">Сигнал за проблем</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info">Съобщение</span>
+                    }
+                </p>
+                <p><strong>Курс ИД: </strong> #@Model.ScheduleId</p>
+                <p><strong>Маршрут: </strong> @Model.Schedule?.Route?.StartDestination - @Model.Schedule?.Route?.FinalDestination </p>
+                <p><strong>Изпратено от: </strong> @Model.Sender?.Name @Model.Sender?.LastName</p>
+                <p><strong>Получател: </strong> @(Model.Receiver != null ? $"{Model.Receiver.Name} {Model.Receiver.LastName}" : "Към администратора")</p>
+                <p><strong>Дата: </strong> @Model.SentAt.ToString("g")</p>
+
+                @if (Model.MessageType == MessageType.ProblemReport)
+                {
+                    <hr />
+                    <p>
+                        <strong>Статус:</strong>
+                        @if (Model.IsResolved)
+                        {
+                            <span class="badge bg-success">Решен</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Активен</span>
+                        }
+                    </p>
+                    @if (User.IsInRole("Administrator") || User.IsInRole("Driver"))
+                    {
+                        <form asp-action="ToggleResolvedStatus" asp-route-id="@Model.Id" method="post">
+                            <input type="submit" class="btn btn-sm @(Model.IsResolved ? "btn-outline-warning" : "btn-success") w-100" value="Маркирай като @(Model.IsResolved ? "Активен" : "Решен")" />
+                        </form>
+                    }
+                }
+            </div>
+            <div class="card-footer">
+                <a asp-action="Index" class="btn btn-secondary btn-sm w-100">Назад към списъка</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="bi bi-chat-text"></i>История на комуникацията</h5>
+            </div>
+            <div class="card-body chat-box" id="messagesList" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                @foreach (var msg in conversation)
+                {
+                    bool isMine = msg.SenderId == currentUserId;
+                    <div class="d-flex mb-3 @(isMine ? "justify-content-end" : "justify-content-start")">
+                        <div class="p-3 rounded-3 shadow-sm @(isMine ? "bg-primary text-white" : "bg-white border")" style="max-width: 75%;">
+                            <div class="fw-bold small mb-1">@msg.Sender?.Name @msg.Sender?.LastName</div>
+                            <div>@msg.Content</div>
+                            <div class="text-end extra-small mt-1 @(isMine ? "text-white-50" : "text-muted")" style="font-size: -.75rem;">
+                                @msg.SentAt.ToString("HH:mm - dd.MM")
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr.js"></script>
+    <script>
+        const scheduleId = @Model.ScheduleId;
+        const currentUserId = @currentUserId;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/messageHub")
+            .build();
+
+        connection.start().then(() => {
+            connection.invoke("JoinScheduleGroup", scheduleId);
+        }).catch(Error => console.error(error));
+
+        connection.on("ReceiveMessage", (senderId, content, sentAt, messageType) => {
+            const isMine = senderId === currentUserId;
+            const msgHtml = `
+                <div class="d-flex mb-3 ${isMine ? 'justify-content-end' : 'justify-content-start'}">
+                    <div class="p-3 rounded-3 shadow-sm ${isMine ? 'bg-primary text-white' : 'bg-white border'}" style="max-width: 75%;">
+                        <div>${content}</div>
+                        <div class="text-end extra-small mt-1 ${isMine ? 'text-white-50' : 'text-muted'}" style="font-size: 0.75rem;">
+                            ${sentAt}
+                        </div>
+                    </div>
+                </div>`;
+            const box = document.getElementById("messagesList");
+            box.insertAdjacentHTML('beforeend', msgHtml);
+            box.scrollTop = box.scrollHeight;
+        });
+    </script>
+}

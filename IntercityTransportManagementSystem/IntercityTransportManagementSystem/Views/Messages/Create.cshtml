@@ -1,0 +1,72 @@
+﻿@model IntercityTransportManagementSystem.Models.Message
+@using IntercityTransportManagementSystem.Enums
+@{
+    ViewData["Title"] = "Ново съобщение/Сигнал";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="card-title mb-0"><i class="bg-info bi-pencil-square"></i> Ново съобщение/Сигнал</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="ScheduleId" class="form-label">Изберете курс</label>
+                    <select asp-for="ScheduleId" class="form-select" asp-items="ViewBag.ScheduleId" id="scheduleSelect"></select>
+                    <span asp-validation-for="ScheduleId" class="text-danger"></span>
+                </div>
+
+                @if (User.IsInRole("Administrator"))
+                {
+                    <div class="mb-3">
+                        <label asp-for="ReceiverId" class="form-label">Получател</label>
+                        <select asp-for="ReceiverId" class="form-select" asp-items="ViewBag.Passengers" id="receiverSelect">
+                            <option value="">Шофьор на курса</option>
+                        </select>
+                        <small class="form-text text-muted">Изберет пътник от курса или оставете празно за шофьора.</small>
+                        <span asp-validation-for="ReceiverId" class="text-danger"></span>
+                    </div>    
+                }
+
+                <div class="mb-3">
+                    <label asp-for="MessageType" class="form-label">Тип на съобщението</label>
+                    <select asp-for="MessageType" class="form-select">
+                        <option value="@MessageType.StandardMessage">Стандартно съобщение</option>
+                        <option value="@MessageType.ProblemReport">Сигнал за проблем (Към администратора)</option>
+                    </select>
+                    <span asp-validation-for="MessageType" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Content" class="form-label">Съдържание</label>
+                    <textarea asp-for="Content" class="form-control" rows="5" placeholder="Опишете вашия въпрос или проблем..."></textarea>
+                    <span asp-validation-for="Content" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"> Изпрати</i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    @if (User.IsInRole("Administrator"))
+    {
+        <script>
+            document.getElementById('scheduleSelect').addEventListener('change', function () {
+                const scheduleId = this.ariaValueMax;
+                if(scheduleId) {
+                    window.location.href = '@Url.Action("Create", "Messages")?scheduleId=' + scheduleId;
+                }
+            });
+        </script>    
+    }
+}
